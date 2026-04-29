@@ -2,26 +2,42 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
-export default function AuthCallbackPage() {
+export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // First check if there is an error in the URL params (from Supabase/Google)
         const params = new URLSearchParams(window.location.search);
         const error = params.get('error_description') || params.get('error');
-        if (error) {
-          throw new Error(error);
-        }
+        if (error) throw new Error(error);
 
-        const { data, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
-        if (data?.session) {
+        if (session?.user) {
+          // Explicit "Login Guard" check as requested
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('record_status')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            // If profile doesn't exist yet, we might allow (or wait), 
+            // but for strict guard we usually want to check it.
+            // If it's a PGRST116 (not found), we'll assume it's still being created.
+            if (profileError.code !== 'PGRST116') throw profileError;
+          }
+
+          if (profile && profile.record_status !== 'ACTIVE') {
+            await supabase.auth.signOut();
+            navigate(`/login?error=${encodeURIComponent('Account Inactive. Please contact support.')}`, { replace: true });
+            return;
+          }
+
           navigate("/employees", { replace: true });
         } else {
-          // No session found? Go to login
           navigate("/login", { replace: true });
         }
       } catch (error) {

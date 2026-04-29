@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { getURL } from "../lib/auth-helpers";
 import  validateForm  from "../lib/validation";
@@ -11,7 +10,6 @@ import SpinnerIcon from "../components/icons/SpinnerIcon";
 import GoogleIcon from "../components/icons/GoogleIcon";
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     firstName: "", lastName: "", username: "", email: "", password: "",
