@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../context/AuthContext";
+import { getURL } from "../lib/auth-helpers";
 import GoogleIcon from "../components/icons/GoogleIcon";
 import EyeOpenIcon from "../components/icons/EyeOpenIcon";
 import EyeClosedIcon from "../components/icons/EyeClosedIcon";
@@ -9,6 +13,8 @@ import validateForm from "../lib/validation";
 import { sansSerif, serif } from "../lib/fonts";
 
 export default function LoginPage() {
+  const [searchParams] = useSearchParams();
+  const urlError = searchParams.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +23,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [touched, setTouched] = useState({ email: false, password: false });
+  const { authError } = useAuth();
+
+  useEffect(() => {
+    if (urlError) {
+      setServerError(decodeURIComponent(urlError));
+    }
+  }, [urlError]);
 
   function handleBlur(field) {
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -47,13 +60,11 @@ export default function LoginPage() {
     setLoading(true);
     setServerError("");
     try {
-      // TODO: replace with supabase.auth.signInWithPassword({ email, password })
-      await new Promise((resolve) => setTimeout(resolve, 1400));
-      if (email === "fail@test.com") {
-        throw new Error("Invalid login credentials.");
-      }
-    } catch (err) {
-      setServerError(err.message || "Something went wrong. Please try again.");
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      // useNavigate will handle the redirect via AuthContext changes
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : "Invalid login credentials.");
     } finally {
       setLoading(false);
     }
@@ -63,9 +74,15 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setServerError("");
     try {
-      // TODO: replace with supabase.auth.signInWithOAuth({ provider: "google" })
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-    } catch (err) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${getURL()}auth/callback`
+        }
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Google login error:", error);
       setServerError("Google sign-in failed. Please try again.");
     } finally {
       setGoogleLoading(false);
@@ -114,7 +131,7 @@ export default function LoginPage() {
 
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-stone-200/80 shadow-[0_8px_40px_rgba(0,0,0,0.08)] px-8 py-8">
 
-          {serverError && <AlertBanner message={serverError} />}
+          {(serverError || authError) && <AlertBanner message={serverError || authError} />}
 
           
 

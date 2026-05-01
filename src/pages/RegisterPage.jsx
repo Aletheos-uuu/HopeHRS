@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient";
+import { getURL } from "../lib/auth-helpers";
 import  validateForm  from "../lib/validation";
 import AlertBanner from "../components/ui/AlertBanner";
 import FieldError from "../components/ui/FieldError";
@@ -9,7 +10,6 @@ import SpinnerIcon from "../components/icons/SpinnerIcon";
 import GoogleIcon from "../components/icons/GoogleIcon";
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     firstName: "", lastName: "", username: "", email: "", password: "",
@@ -51,6 +51,7 @@ export default function RegisterPage() {
           last_name: form.lastName,
           username: form.username,
         },
+        emailRedirectTo: `${getURL()}auth/callback`
       },
     });
     setLoading(false);
@@ -58,12 +59,24 @@ export default function RegisterPage() {
     if (error) {
       setAlertMsg(error.message);
     } else {
-      navigate("/");
+      setAlertMsg("Registration successful! Please check your email for a confirmation link.");
     }
   }
 
   async function handleGoogle() {
-    await supabase.auth.signInWithOAuth({ provider: "google" });
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ 
+        provider: "google",
+        options: {
+          redirectTo: `${getURL()}auth/callback`
+        }
+      });
+      if (error) throw error;
+    } catch (error) {
+      setAlertMsg(error.message);
+      setLoading(false);
+    }
   }
     
 
