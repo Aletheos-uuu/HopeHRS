@@ -1,9 +1,10 @@
 import { supabase } from '../lib/supabaseClient'
 
-// GET — USER sees only ACTIVE, ADMIN/SUPERADMIN sees all
+// GET — query the view to include current job data
+// RLS enforces ACTIVE-only for USER; service filter is belt-and-suspenders
 export async function getEmployees(userType) {
   let query = supabase
-    .from('employee')
+    .from('employee_current_job')
     .select('*')
 
   if (userType === 'USER') {
@@ -24,6 +25,8 @@ export async function addEmployee(employeeData, currentUser) {
       record_status: 'ACTIVE',
       stamp: `Added by ${currentUser.email} on ${new Date().toISOString()}`
     }])
+    .select()
+
   if (error) throw error
   return data
 }
@@ -37,46 +40,38 @@ export async function updateEmployee(empno, updates, currentUser) {
       stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`
     })
     .eq('empno', empno)
+    .select()
+
   if (error) throw error
   return data
 }
 
-// SOFT DELETE — also cascades to jobHistory
+// SOFT DELETE — cascade to jobHistory is handled by DB trigger (M3 PR-03)
 export async function softDeleteEmployee(empno, currentUser) {
-  const stamp = `Deleted by ${currentUser.email} on ${new Date().toISOString()}`
-
-  // Cascade: set all jobHistory rows for this employee to INACTIVE
-  const { error: jhError } = await supabase
-    .from('jobHistory')
-    .update({ record_status: 'INACTIVE', stamp })
-    .eq('empNo', empno)
-  if (jhError) throw jhError
-
-  // Then soft delete the employee
   const { data, error } = await supabase
     .from('employee')
-    .update({ record_status: 'INACTIVE', stamp })
+    .update({
+      record_status: 'INACTIVE',
+      stamp: `Deleted by ${currentUser.email} on ${new Date().toISOString()}`
+    })
     .eq('empno', empno)
+    .select()
+
   if (error) throw error
   return data
 }
 
-// RECOVER — also cascades jobHistory back to ACTIVE
+// RECOVER — cascade restore to jobHistory is handled by DB trigger (M3 PR-03)
 export async function recoverEmployee(empno, currentUser) {
-  const stamp = `Recovered by ${currentUser.email} on ${new Date().toISOString()}`
-
-  // Cascade restore: set all jobHistory rows for this employee back to ACTIVE
-  const { error: jhError } = await supabase
-    .from('jobHistory')
-    .update({ record_status: 'ACTIVE', stamp })
-    .eq('empNo', empno)
-  if (jhError) throw jhError
-
-  // Then recover the employee
   const { data, error } = await supabase
     .from('employee')
-    .update({ record_status: 'ACTIVE', stamp })
+    .update({
+      record_status: 'ACTIVE',
+      stamp: `Recovered by ${currentUser.email} on ${new Date().toISOString()}`
+    })
     .eq('empno', empno)
+    .select()
+
   if (error) throw error
   return data
 }
