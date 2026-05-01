@@ -1,13 +1,16 @@
 -- HopeHRS - Migration 006: SQL Views
 -- PR-06  db/views
 
-CREATE OR REPLACE VIEW employee_current_job AS
+DROP VIEW IF EXISTS employee_current_job;
+
+CREATE VIEW employee_current_job AS
 SELECT
   e.empno,
   e.lastname,
   e.firstname,
   e.gender,
   e.hiredate,
+  e.sepDate,
   jh.jobCode,
   j.jobDesc,
   jh.salary,
@@ -24,5 +27,5 @@ WHERE jh.effDate = (
   WHERE empNo = e.empno
   AND record_status = 'ACTIVE'
 )
-AND e.record_status   = 'ACTIVE'
-AND jh.record_status  = 'ACTIVE';
+AND e.record_status  = 'ACTIVE'
+AND jh.record_status = 'ACTIVE';
