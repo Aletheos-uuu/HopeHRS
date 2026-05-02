@@ -48,7 +48,7 @@ function ProfileSkeleton() {
 // ─── profile card ─────────────────────────────────────────────────────────────
 
 function ProfileCard({ employee }) {
-  const isActive = employee.status === "ACTIVE";
+  const isActive = employee.record_status === "ACTIVE";
   const initials = getInitials(employee.firstname, employee.lastname);
 
   return (
@@ -87,12 +87,12 @@ function ProfileCard({ employee }) {
                   ${isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"}
                 `}
               >
-                {employee.status ?? "ACTIVE"}
+                {employee.record_status ?? "ACTIVE"}
               </span>
             </div>
 
             <p className="text-sm text-gray-400 mt-0.5 font-mono">
-              #{employee.empno}
+              #{employee.empNo}
             </p>
 
             {employee.currentJob && (
@@ -144,7 +144,7 @@ function ProfileCard({ employee }) {
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function EmployeeDetailPage() {
-  const { empno } = useParams();
+  const { empNo } = useParams();
   const navigate = useNavigate();
 
   const [employee, setEmployee] = useState(null);
@@ -158,9 +158,9 @@ export default function EmployeeDetailPage() {
       try {
         // Adjust to your actual view/table name — assumes a view that includes currentJob
         const { data, error } = await supabase
-          .from("employees_view") // TODO: replace with your view name
+          .from("employee_current_job") // TODO: replace with your view name
           .select("*")
-          .eq("empno", empno)
+          .eq("empNo", empNo)
           .single();
 
         if (error) throw error;
@@ -173,7 +173,7 @@ export default function EmployeeDetailPage() {
     }
 
     fetchEmployee();
-  }, [empno]);
+  }, [empNo]);
 
   return (
     <div className="min-h-full bg-gray-50">
@@ -209,7 +209,7 @@ export default function EmployeeDetailPage() {
         ) : employee ? (
           <>
             <ProfileCard employee={employee} />
-            <JobHistoryPanel empno={empno} />
+            <JobHistoryPanel empNo={employee.empNo} />
           </>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-12 text-center">
