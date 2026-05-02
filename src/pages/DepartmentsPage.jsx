@@ -60,6 +60,7 @@ export default function DepartmentsPage() {
   useEffect(() => { fetchDepartment() }, [])
 
   const filtered = department.filter((d) => {
+
     const q = search.toLowerCase()
     return (
       d.dept_code.toLowerCase().includes(q) ||
@@ -170,7 +171,9 @@ export default function DepartmentsPage() {
       <AddDeptModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
+
         onSuccess={fetchDepartment}
+
       />
       <EditDeptModal
         open={!!editDept}

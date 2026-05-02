@@ -43,7 +43,9 @@ export default function EditDeptModal({ open, onClose, onSuccess, department }) 
     setServerError('')
 
     const { error } = await supabase
+
       .from('department')
+
       .update({ dept_name: form.deptName.trim() })
       .eq('dept_code', department.dept_code)
 

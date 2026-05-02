@@ -18,6 +18,7 @@ export default function EditJobModal({ open, onClose, onSuccess, job }) {
     if (job) {
       setForm({
         jobDesc: job.jobDesc ?? '',
+
         record_status: job.record_status ?? 'ACTIVE',
       })
       setErrors({})
@@ -47,12 +48,14 @@ export default function EditJobModal({ open, onClose, onSuccess, job }) {
     setServerError('')
 
     const { error } = await supabase
+
       .from('job')
       .update({
         jobDesc: form.jobDesc.trim(),
         record_status: form.record_status,
       })
       .eq('jobCode', job.jobCode)
+
 
     setSaving(false)
 
@@ -72,6 +75,7 @@ export default function EditJobModal({ open, onClose, onSuccess, job }) {
           <label className="block text-sm font-medium text-gray-700 mb-1">Job Code</label>
           <div className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-sm text-gray-500 font-mono tracking-wide">
             {job.jobCode}
+
           </div>
           <p className="mt-1 text-xs text-gray-400">Job code cannot be changed after creation.</p>
         </div>

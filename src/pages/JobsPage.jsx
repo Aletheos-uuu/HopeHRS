@@ -110,9 +110,11 @@ export default function JobsPage() {
   async function fetchJobs() {
     setLoading(true);
     const { data, error } = await supabase
+
       .from("job")
       .select("jobCode, jobDesc, record_status")
       .order("jobCode", { ascending: true });
+
 
     if (!error) setJobs(data ?? []);
     setLoading(false);
@@ -128,6 +130,7 @@ export default function JobsPage() {
     return (
       j.jobCode.toLowerCase().includes(q) ||
       j.jobDesc.toLowerCase().includes(q)
+
     );
   });
 
@@ -223,6 +226,7 @@ export default function JobsPage() {
               ) : (
                 filtered.map((job) => (
                   <tr
+
                     key={job.jobCode}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
@@ -230,6 +234,7 @@ export default function JobsPage() {
                       {job.jobCode}
                     </td>
                     <td className="px-4 py-3 text-gray-800">{job.jobDesc}</td>
+
                     <td className="px-4 py-3">
                       <StatusBadge status={job.record_status} />
                     </td>
