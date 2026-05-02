@@ -1,21 +1,17 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabaseClient";
-import { useAuth } from "../../context/AuthContext";
+import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabaseClient'
 
 // ─── field components ─────────────────────────────────────────────────────────
 
 function Label({ htmlFor, children }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className="block text-xs font-semibold text-gray-600 mb-1"
-    >
+    <label htmlFor={htmlFor} className="block text-xs font-semibold text-gray-600 mb-1">
       {children}
     </label>
-  );
+  )
 }
 
-function Input({ id, type = "text", value, onChange, placeholder, disabled }) {
+function Input({ id, type = 'text', value, onChange, placeholder, disabled }) {
   return (
     <input
       id={id}
@@ -29,10 +25,10 @@ function Input({ id, type = "text", value, onChange, placeholder, disabled }) {
         placeholder:text-gray-300 bg-white
         focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400
         transition-shadow
-        ${disabled ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed" : "border-gray-200"}
+        ${disabled ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'border-gray-200'}
       `}
     />
-  );
+  )
 }
 
 function Select({ id, value, onChange, children, disabled }) {
@@ -46,110 +42,90 @@ function Select({ id, value, onChange, children, disabled }) {
         w-full px-3 py-2 rounded-lg border text-sm text-gray-800 bg-white
         focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400
         transition-shadow appearance-none
-        ${disabled ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed" : "border-gray-200"}
+        ${disabled ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'border-gray-200'}
       `}
     >
       {children}
     </select>
-  );
+  )
 }
 
 function FieldError({ message }) {
-  if (!message) return null;
-  return <p className="mt-1 text-xs text-red-500">{message}</p>;
+  if (!message) return null
+  return <p className="mt-1 text-xs text-red-500">{message}</p>
 }
 
 // ─── modal ────────────────────────────────────────────────────────────────────
 
-export default function EditJobHistoryModal({
-  row,
-  jobs,
-  depts,
-  onSuccess,
-  onClose,
-}) {
-  const { currentUser } = useAuth();
+export default function EditJobHistoryModal({ row, jobs, depts, onSuccess, onClose }) {
+  const [form, setForm]       = useState({ effDate: '', jobCode: '', deptCode: '', salary: '' })
+  const [errors, setErrors]   = useState({})
+  const [saving, setSaving]   = useState(false)
+  const [apiError, setApiError] = useState(null)
 
-  const [form, setForm] = useState({
-    effDate: "",
-    jobCode: "",
-    deptCode: "",
-    salary: "",
-  });
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [apiError, setApiError] = useState(null);
-
-  const jobOptions = Object.entries(jobs);
-  const deptOptions = Object.entries(depts);
+  const jobOptions  = Object.entries(jobs)
+  const deptOptions = Object.entries(depts)
 
   // seed from row
   useEffect(() => {
     if (row) {
       setForm({
-        effDate: row.effDate ?? "",
-        jobCode: row.jobCode ?? "",
-        deptCode: row.deptCode ?? "",
-        salary: row.salary != null ? String(row.salary) : "",
-      });
-      setErrors({});
-      setApiError(null);
+        effDate:  row.effDate  ?? '',
+        jobCode:  row.jobCode  ?? '',
+        deptCode: row.deptCode ?? '',
+        salary:   row.salary != null ? String(row.salary) : '',
+      })
+      setErrors({})
+      setApiError(null)
     }
-  }, [row]);
+  }, [row])
 
   function set(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    setForm((f) => ({ ...f, [field]: value }))
+    setErrors((e) => ({ ...e, [field]: undefined }))
   }
 
   function validate() {
-    const errs = {};
-    if (!form.effDate) errs.effDate = "Effective date is required.";
-    if (!form.jobCode) errs.jobCode = "Job is required.";
-    if (!form.deptCode) errs.deptCode = "Department is required.";
-    if (form.salary && isNaN(Number(form.salary)))
-      errs.salary = "Must be a number.";
-    return errs;
+    const errs = {}
+    if (!form.effDate)  errs.effDate  = 'Effective date is required.'
+    if (!form.jobCode)  errs.jobCode  = 'Job is required.'
+    if (!form.deptCode) errs.deptCode = 'Department is required.'
+    if (form.salary && isNaN(Number(form.salary))) errs.salary = 'Must be a number.'
+    return errs
   }
 
   async function handleSave() {
-    const errs = validate();
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
-    }
+    const errs = validate()
+    if (Object.keys(errs).length) { setErrors(errs); return }
 
-    setSaving(true);
-    setApiError(null);
+    setSaving(true)
+    setApiError(null)
     try {
       const payload = {
-        effDate: form.effDate,
-        jobCode: form.jobCode,
+        effDate:  form.effDate,
+        jobCode:  form.jobCode,
         deptCode: form.deptCode,
-        salary: form.salary ? Number(form.salary) : null,
-        stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`,
-      };
+        salary:   form.salary ? Number(form.salary) : null,
+      }
 
       const { error } = await supabase
-        .from("jobHistory")
+        .from('job_history')
         .update(payload)
-        .eq("empNo", row.empNo)
-        .eq("jobCode", row.jobCode)
-        .eq("effDate", row.effDate);
+        .eq('id', row.id)   // TODO: adjust PK column name if needed
 
-      if (error) throw error;
-      onSuccess();
+      if (error) throw error
+      onSuccess()
     } catch (err) {
-      setApiError(err.message);
+      setApiError(err.message)
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.35)" }}
+      style={{ background: 'rgba(0,0,0,0.35)' }}
       onClick={saving ? undefined : onClose}
     >
       <div
@@ -159,30 +135,16 @@ export default function EditJobHistoryModal({
         {/* header */}
         <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-start justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">
-              Edit Job History Entry
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5 font-mono">
-              Employee #{row?.empNo}
-            </p>
+            <h2 className="text-sm font-semibold text-gray-900">Edit Job History Entry</h2>
+            <p className="text-xs text-gray-400 mt-0.5 font-mono">Employee #{row?.empno}</p>
           </div>
           <button
             onClick={onClose}
             disabled={saving}
             className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 16 16"
-              stroke="currentColor"
-              strokeWidth={1.75}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.5 3.5l9 9M12.5 3.5l-9 9"
-              />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
             </svg>
           </button>
         </div>
@@ -203,7 +165,7 @@ export default function EditJobHistoryModal({
                 id="edit-effDate"
                 type="date"
                 value={form.effDate}
-                onChange={(e) => set("effDate", e.target.value)}
+                onChange={(e) => set('effDate', e.target.value)}
               />
               <FieldError message={errors.effDate} />
             </div>
@@ -215,7 +177,7 @@ export default function EditJobHistoryModal({
                 id="edit-salary"
                 type="number"
                 value={form.salary}
-                onChange={(e) => set("salary", e.target.value)}
+                onChange={(e) => set('salary', e.target.value)}
                 placeholder="e.g. 60000"
               />
               <FieldError message={errors.salary} />
@@ -227,13 +189,11 @@ export default function EditJobHistoryModal({
               <Select
                 id="edit-jobCode"
                 value={form.jobCode}
-                onChange={(e) => set("jobCode", e.target.value)}
+                onChange={(e) => set('jobCode', e.target.value)}
               >
                 <option value="">Select job…</option>
                 {jobOptions.map(([code, desc]) => (
-                  <option key={code} value={code}>
-                    {desc}
-                  </option>
+                  <option key={code} value={code}>{desc}</option>
                 ))}
               </Select>
               <FieldError message={errors.jobCode} />
@@ -245,13 +205,11 @@ export default function EditJobHistoryModal({
               <Select
                 id="edit-deptCode"
                 value={form.deptCode}
-                onChange={(e) => set("deptCode", e.target.value)}
+                onChange={(e) => set('deptCode', e.target.value)}
               >
                 <option value="">Select department…</option>
                 {deptOptions.map(([code, name]) => (
-                  <option key={code} value={code}>
-                    {name}
-                  </option>
+                  <option key={code} value={code}>{name}</option>
                 ))}
               </Select>
               <FieldError message={errors.deptCode} />
@@ -283,10 +241,10 @@ export default function EditJobHistoryModal({
             disabled={saving}
             className="px-4 py-2 text-xs rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }
