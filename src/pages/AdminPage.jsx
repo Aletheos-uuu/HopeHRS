@@ -4,16 +4,24 @@ import { useAuth } from '../context/AuthContext'
 /**
  * AdminPage
  *
- * Page-level guard: USER role is redirected to / immediately.
- * Only ADMIN and SUPERADMIN can reach this page — consistent with
- * the sidebar gating applied in SidebarNav.
+ * Page-level guard: only SUPERADMIN can reach this page.
  *
- * Content to be filled in a future PR.
+ * Per the rights matrix (Section 3.2 of the Project Development Guide),
+ * ADM_USER is SUPERADMIN-only. ADMIN (HR Manager) does NOT hold ADM_USER = 1.
+ * Any non-SUPERADMIN is redirected to /employees (the app's default landing page).
+ *
+ * The sidebar link is already gated in navItems.js (allowedRoles: ['SUPERADMIN']),
+ * but this page-level guard provides a defence-in-depth safety net against
+ * direct URL navigation.
+ *
+ * Content to be filled in Sprint 3 (UserManagementPage per the sprint plan).
  */
 export default function AdminPage() {
   const { userRole } = useAuth()
 
-  if (userRole === 'USER') return <Navigate to="/" replace />
+  // Redirect non-SUPERADMIN users to /employees, not "/",
+  // since "/" has no defined route in this app's router config.
+  if (userRole !== 'SUPERADMIN') return <Navigate to="/employees" replace />
 
   return (
     <div className="p-6 sm:p-8 max-w-5xl mx-auto">
@@ -34,7 +42,7 @@ export default function AdminPage() {
 
       {/* Placeholder content */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-12 text-center">
-        <p className="text-sm text-gray-400">Admin panel content — coming in a future sprint.</p>
+        <p className="text-sm text-gray-400">Admin panel content — coming in Sprint 3.</p>
       </div>
     </div>
   )
