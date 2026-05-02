@@ -5,53 +5,69 @@ import { supabase } from '../../lib/supabaseClient'
  * DeletedTab — reusable template for all four Deleted Items tabs.
  *
  * Props:
- *   table        string   — Supabase table name to query
- *   statusField  string   — field to filter on ('status' | 'record_status')
+ *   table        string   — Supabase table name to query (must match exact Supabase table name)
+ *   statusField  string   — field to filter on; defaults to 'record_status' per schema
  *   columns      Array<{ key: string, label: string, render?: fn }>
  *                         — column definitions; render(row) optional for custom cells
- *   rowKey       string   — unique row identifier field (e.g. 'empno', 'id', 'job_code')
+ *   rowKey       string   — unique row identifier field (e.g. 'empno', 'jobCode', 'deptCode')
+ *                           For jobHistory (composite PK), pass the field used to identify rows
+ *                           in the UI; M3 must add a surrogate key or use a stable sort field.
+ *   orderField   string   — field to sort by; defaults to rowKey. Pass a stable non-PK field
+ *                           (e.g. 'empno') when rowKey is a composite surrogate.
  *   onRecover    fn(row)  — async fn that performs the restore; must resolve/reject
  *   emptyMessage string   — shown when no deleted records found
+ *   showStamp    bool     — pass true for ADMIN/SUPERADMIN to show the stamp audit column
  */
 export default function DeletedTab({
   table,
-  statusField = 'record_status',
+  statusField = 'record_status',   // FIX: was inconsistently 'status' on employee tab in parent
   columns,
   rowKey,
+  orderField,                       // FIX: separate sort field so composite-PK tables don't break
   onRecover,
   emptyMessage = 'No deleted records found.',
+  showStamp = false,                // FIX: stamp visibility per guide (ADMIN/SUPERADMIN only)
 }) {
-  const [rows, setRows]         = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
-  const [recovering, setRecovering] = useState(null) // rowKey value of in-flight row
+  const [rows, setRows]           = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [fetchError, setFetchError] = useState('')      // FIX: split fetch vs recover errors
+  const [recoverError, setRecoverError] = useState('')  // so a failed recovery doesn't wipe the table
+  const [recovering, setRecovering] = useState(null)    // rowKey value of in-flight row
+
+  // Use orderField if provided, fall back to rowKey — avoids crash when rowKey
+  // is a surrogate not present as a real column (e.g. composite PK tables).
+  const sortField = orderField ?? rowKey
 
   const fetchRows = useCallback(async () => {
     setLoading(true)
-    setError('')
+    setFetchError('')
+    setRecoverError('')
     const { data, error: fetchErr } = await supabase
       .from(table)
       .select('*')
       .eq(statusField, 'INACTIVE')
-      .order(rowKey, { ascending: true })
+      .order(sortField, { ascending: true })
 
     if (fetchErr) {
-      setError(fetchErr.message)
+      setFetchError(fetchErr.message)
     } else {
       setRows(data ?? [])
     }
     setLoading(false)
-  }, [table, statusField, rowKey])
+  }, [table, statusField, sortField])
 
   useEffect(() => { fetchRows() }, [fetchRows])
 
   async function handleRecover(row) {
-    setRecovering(row[rowKey])
+    // FIX: use String() coercion so numeric IDs and string keys both compare correctly
+    setRecovering(String(row[rowKey]))
+    setRecoverError('')
     try {
       await onRecover(row)
       await fetchRows()
     } catch (err) {
-      setError(err?.message ?? 'Recovery failed.')
+      // FIX: store recover error separately — table rows stay visible
+      setRecoverError(err?.message ?? 'Recovery failed. Please try again.')
     } finally {
       setRecovering(null)
     }
@@ -74,14 +90,14 @@ export default function DeletedTab({
     )
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
-  if (error) {
+  // ── Fetch error state (full-panel — no data to show) ──────────────────────
+  if (fetchError) {
     return (
       <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 flex items-center gap-2">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="shrink-0">
           <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
         </svg>
-        <span>{error}</span>
+        <span>{fetchError}</span>
         <button
           onClick={fetchRows}
           className="ml-auto text-xs underline hover:no-underline"
@@ -112,6 +128,23 @@ export default function DeletedTab({
   // ── Table ─────────────────────────────────────────────────────────────────
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+
+      {/* FIX: inline recover error banner — table stays visible underneath */}
+      {recoverError && (
+        <div className="px-4 py-2.5 bg-red-50 border-b border-red-100 flex items-center gap-2 text-sm text-red-600">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="shrink-0">
+            <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+          </svg>
+          <span>{recoverError}</span>
+          <button
+            onClick={() => setRecoverError('')}
+            className="ml-auto text-xs underline hover:no-underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -124,6 +157,12 @@ export default function DeletedTab({
                   {col.label}
                 </th>
               ))}
+              {/* FIX: stamp column — only rendered when showStamp=true (ADMIN/SUPERADMIN) */}
+              {showStamp && (
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
+                  Stamp
+                </th>
+              )}
               <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
                 Action
               </th>
@@ -131,7 +170,8 @@ export default function DeletedTab({
           </thead>
           <tbody className="divide-y divide-gray-50">
             {rows.map((row) => {
-              const id = row[rowKey]
+              // FIX: String() coercion so numeric and string keys compare correctly
+              const id = String(row[rowKey])
               const isRecovering = recovering === id
               return (
                 <tr
@@ -143,6 +183,12 @@ export default function DeletedTab({
                       {col.render ? col.render(row) : (row[col.key] ?? '—')}
                     </td>
                   ))}
+                  {/* FIX: stamp cell — hidden from USER, shown for ADMIN/SUPERADMIN */}
+                  {showStamp && (
+                    <td className="px-4 py-3 text-gray-400 text-xs font-mono">
+                      {row.stamp ?? '—'}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleRecover(row)}
