@@ -4,17 +4,17 @@ import { supabase } from '../lib/supabaseClient'
 import DeletedTab from '../components/deletedItems/DeletedTab'
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
-// Each tab declares: id, label, and everything DeletedTab needs.
-// recover() functions return a resolved/rejected promise so DeletedTab
-// can handle spinner + error state uniformly.
+// Table names, field names, and rowKeys all match the HopeDB schema exactly.
+// recover() functions only update record_status — no business data is touched.
 
 const TABS = [
   {
     id: 'employees',
     label: 'Employees',
-    table: 'employees',
-    statusField: 'status',
+    table: 'employee',              // FIX: was 'employees' — HopeDB table is 'employee'
+    statusField: 'record_status',   // FIX: was 'status' — schema column is 'record_status'
     rowKey: 'empno',
+    orderField: 'empno',
     emptyMessage: 'No deleted employees found.',
     columns: [
       {
@@ -43,9 +43,14 @@ const TABS = [
       },
     ],
     recover: async (row) => {
+      // FIX: was updating wrong table ('employees') and wrong field ('status')
+      // FIX: was nulling sepDate — recovery must only restore record_status;
+      //      sepDate is business data and must not be altered on recovery.
+      //      The cascade trigger on employee will automatically restore all
+      //      their jobHistory rows to ACTIVE (see Section 7.2 of the guide).
       const { error } = await supabase
-        .from('employees')
-        .update({ status: 'ACTIVE', sepDate: null })
+        .from('employee')
+        .update({ record_status: 'ACTIVE' })
         .eq('empno', row.empno)
       if (error) throw error
     },
@@ -53,25 +58,34 @@ const TABS = [
   {
     id: 'job-history',
     label: 'Job History',
-    table: 'job_history',
+    // FIX: was 'job_history' — HopeDB table is 'jobHistory'.
+    // NOTE: Supabase may lowercase this to 'jobhistory' depending on M3's migration.
+    // Coordinate with M3: if they quoted the name in CREATE TABLE it stays 'jobHistory';
+    // if unquoted PostgreSQL folds it to 'jobhistory'. Use whichever M3 confirms.
+    table: 'jobHistory',
     statusField: 'record_status',
-    rowKey: 'id',
+    // FIX: was 'id' — jobHistory has a composite PK (empNo, jobCode, effDate), no 'id'.
+    // rowKey is set to 'empNo' for UI identity (row highlighting/spinner).
+    // orderField sorts by empNo then effDate for a readable deleted list.
+    // recover() uses all three PK fields to target the exact row.
+    rowKey: 'empNo',
+    orderField: 'empNo',
     emptyMessage: 'No deleted job history records found.',
     columns: [
       {
-        key: 'empno',
+        key: 'empNo',               // FIX: was 'empno' — schema column is 'empNo'
         label: 'Emp No',
         render: (row) => (
-          <span className="font-mono text-xs text-gray-600 font-medium">{row.empno}</span>
+          <span className="font-mono text-xs text-gray-600 font-medium">{row.empNo}</span>
         ),
       },
       {
-        key: 'eff_date',
+        key: 'effDate',             // FIX: was 'eff_date' — schema column is 'effDate'
         label: 'Eff Date',
-        render: (row) => formatDate(row.eff_date),
+        render: (row) => formatDate(row.effDate),
       },
-      { key: 'job_code',  label: 'Job Code' },
-      { key: 'dept_code', label: 'Dept Code' },
+      { key: 'jobCode',  label: 'Job Code' },   // FIX: was 'job_code'
+      { key: 'deptCode', label: 'Dept Code' },  // FIX: was 'dept_code'
       {
         key: 'salary',
         label: 'Salary',
@@ -86,64 +100,72 @@ const TABS = [
       },
     ],
     recover: async (row) => {
+      // FIX: was querying 'job_history' with .eq('id', ...) — neither exists.
+      // Must target the composite PK: (empNo, jobCode, effDate).
       const { error } = await supabase
-        .from('job_history')
+        .from('jobHistory')
         .update({ record_status: 'ACTIVE' })
-        .eq('id', row.id)
+        .eq('empNo', row.empNo)
+        .eq('jobCode', row.jobCode)
+        .eq('effDate', row.effDate)
       if (error) throw error
     },
   },
   {
     id: 'jobs',
     label: 'Jobs',
-    table: 'jobs',
+    table: 'job',                   // FIX: was 'jobs' — HopeDB table is 'job'
     statusField: 'record_status',
-    rowKey: 'job_code',
+    rowKey: 'jobCode',              // FIX: was 'job_code' — schema column is 'jobCode'
+    orderField: 'jobCode',
     emptyMessage: 'No deleted jobs found.',
     columns: [
       {
-        key: 'job_code',
+        key: 'jobCode',             // FIX: was 'job_code'
         label: 'Job Code',
         render: (row) => (
           <span className="font-mono text-xs text-gray-700 font-medium tracking-wide">
-            {row.job_code}
+            {row.jobCode}
           </span>
         ),
       },
-      { key: 'job_desc', label: 'Description' },
+      { key: 'jobDesc', label: 'Description' }, // FIX: was 'job_desc' — schema is 'jobDesc'
     ],
     recover: async (row) => {
+      // FIX: was querying 'jobs' with .eq('job_code', ...) — both wrong
       const { error } = await supabase
-        .from('jobs')
+        .from('job')
         .update({ record_status: 'ACTIVE' })
-        .eq('job_code', row.job_code)
+        .eq('jobCode', row.jobCode)
       if (error) throw error
     },
   },
   {
     id: 'departments',
     label: 'Departments',
-    table: 'departments',
+    table: 'department',            // FIX: was 'departments' — HopeDB table is 'department'
     statusField: 'record_status',
-    rowKey: 'dept_code',
+    rowKey: 'deptCode',             // FIX: was 'dept_code' — schema column is 'deptCode'
+    orderField: 'deptCode',
     emptyMessage: 'No deleted departments found.',
     columns: [
       {
-        key: 'dept_code',
+        key: 'deptCode',            // FIX: was 'dept_code'
         label: 'Dept Code',
         render: (row) => (
           <span className="font-mono text-xs text-gray-700 font-medium tracking-wide">
-            {row.dept_code}
+            {row.deptCode}
           </span>
         ),
       },
-      { key: 'dept_name', label: 'Department Name' },
+      { key: 'deptName', label: 'Department Name' }, // FIX: was 'dept_name' — schema is 'deptName'
     ],
     recover: async (row) => {
+      // FIX: was querying 'departments' with .eq('dept_code', ...) — both wrong
       const { error } = await supabase
-        .from('departments')
+        .from('department')
         .update({ record_status: 'ACTIVE' })
-        .eq('dept_code', row.dept_code)
+        .eq('deptCode', row.deptCode)
       if (error) throw error
     },
   },
@@ -162,13 +184,20 @@ const VALID_TAB_IDS = TABS.map((t) => t.id)
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function DeletedItemsPage() {
-  const { userRole } = useAuth()
+  // FIX: was destructuring 'userRole' — AuthContext exposes currentUser with user_type.
+  // The guard and showStamp prop both depend on user_type matching schema values
+  // ('USER', 'ADMIN', 'SUPERADMIN'). Adjust the destructure to match your AuthContext shape.
+  const { currentUser } = useAuth()
+  const userType = currentUser?.user_type  // 'SUPERADMIN' | 'ADMIN' | 'USER'
+
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // ── Page-level guard ────────────────────────────────────────────────────
-  if (userRole === 'USER') return <Navigate to="/" replace />
+  // ── Page-level guard ─────────────────────────────────────────────────────
+  // FIX: was comparing userRole === 'USER'; now uses user_type from schema.
+  // Also guards against an unauthenticated/null currentUser.
+  if (!currentUser || userType === 'USER') return <Navigate to="/" replace />
 
-  // ── URL-synced tab state ─────────────────────────────────────────────────
+  // ── URL-synced tab state ──────────────────────────────────────────────────
   const rawTab = searchParams.get('tab')
   const activeTabId = VALID_TAB_IDS.includes(rawTab) ? rawTab : TABS[0].id
   const activeTab = TABS.find((t) => t.id === activeTabId)
@@ -176,6 +205,9 @@ export default function DeletedItemsPage() {
   function setTab(id) {
     setSearchParams({ tab: id }, { replace: true })
   }
+
+  // Stamp column is visible to ADMIN and SUPERADMIN per Section 3.4 of the guide
+  const showStamp = userType === 'ADMIN' || userType === 'SUPERADMIN'
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -219,8 +251,10 @@ export default function DeletedItemsPage() {
         statusField={activeTab.statusField}
         columns={activeTab.columns}
         rowKey={activeTab.rowKey}
+        orderField={activeTab.orderField}   // FIX: pass orderField so sort doesn't break
         onRecover={activeTab.recover}
         emptyMessage={activeTab.emptyMessage}
+        showStamp={showStamp}               // FIX: pass stamp visibility per user_type
       />
     </div>
   )
