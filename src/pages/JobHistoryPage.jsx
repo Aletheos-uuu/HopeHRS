@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { usePermission } from "../context/AuthContext";
-import JobHistoryPanel from "../components/JobHistory/JobHistoryPanel";
+import JobHistoryPanel from "../components/jobHistory/JobHistoryPanel";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
