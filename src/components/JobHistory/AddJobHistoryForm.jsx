@@ -1,17 +1,20 @@
-import { useState } from 'react'
-import { supabase } from '../../lib/supabaseClient'
-
+import { useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
+import { useAuth } from "../../context/AuthContext";
 // ─── field components ─────────────────────────────────────────────────────────
 
 function Label({ htmlFor, children }) {
   return (
-    <label htmlFor={htmlFor} className="block text-xs font-semibold text-gray-600 mb-1">
+    <label
+      htmlFor={htmlFor}
+      className="block text-xs font-semibold text-gray-600 mb-1"
+    >
       {children}
     </label>
-  )
+  );
 }
 
-function Input({ id, type = 'text', value, onChange, placeholder, required }) {
+function Input({ id, type = "text", value, onChange, placeholder, required }) {
   return (
     <input
       id={id}
@@ -27,7 +30,7 @@ function Input({ id, type = 'text', value, onChange, placeholder, required }) {
         transition-shadow
       "
     />
-  )
+  );
 }
 
 function Select({ id, value, onChange, children, required }) {
@@ -45,75 +48,89 @@ function Select({ id, value, onChange, children, required }) {
     >
       {children}
     </select>
-  )
+  );
 }
 
 function FieldError({ message }) {
-  if (!message) return null
-  return <p className="mt-1 text-xs text-red-500">{message}</p>
+  if (!message) return null;
+  return <p className="mt-1 text-xs text-red-500">{message}</p>;
 }
 
 // ─── defaults ─────────────────────────────────────────────────────────────────
 
-const EMPTY = { effDate: '', jobCode: '', deptCode: '', salary: '' }
+const EMPTY = { effDate: "", jobCode: "", deptCode: "", salary: "" };
 
 // ─── form ─────────────────────────────────────────────────────────────────────
 
-export default function AddJobHistoryForm({ empno, jobs, depts, onSuccess, onCancel }) {
-  const [form, setForm]       = useState(EMPTY)
-  const [errors, setErrors]   = useState({})
-  const [saving, setSaving]   = useState(false)
-  const [apiError, setApiError] = useState(null)
-
-  const jobOptions  = Object.entries(jobs)   // [[jobCode, jobDesc], ...]
-  const deptOptions = Object.entries(depts)  // [[deptCode, deptName], ...]
+export default function AddJobHistoryForm({
+  empno,
+  job,
+  depts,
+  onSuccess,
+  onCancel,
+}) {
+  const [form, setForm] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const { currentUser } = useAuth();
+  const jobOptions = Object.entries(job); // [[jobCode, jobDesc], ...]
+  const deptOptions = Object.entries(depts); // [[deptCode, deptName], ...]
 
   function set(field, value) {
-    setForm((f) => ({ ...f, [field]: value }))
-    setErrors((e) => ({ ...e, [field]: undefined }))
+    setForm((f) => ({ ...f, [field]: value }));
+    setErrors((e) => ({ ...e, [field]: undefined }));
   }
 
   function validate() {
-    const errs = {}
-    if (!form.effDate)  errs.effDate  = 'Effective date is required.'
-    if (!form.jobCode)  errs.jobCode  = 'Job is required.'
-    if (!form.deptCode) errs.deptCode = 'Department is required.'
-    if (form.salary && isNaN(Number(form.salary))) errs.salary = 'Salary must be a number.'
-    return errs
+    const errs = {};
+    if (!form.effDate) errs.effDate = "Effective date is required.";
+    if (!form.jobCode) errs.jobCode = "Job is required.";
+    if (!form.deptCode) errs.deptCode = "Department is required.";
+    if (form.salary && isNaN(Number(form.salary)))
+      errs.salary = "Salary must be a number.";
+    return errs;
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
 
-    setSaving(true)
-    setApiError(null)
+    setSaving(true);
+    setApiError(null);
     try {
       const payload = {
-        empno,
-        effDate:  form.effDate,
-        jobCode:  form.jobCode,
+        empNo: empno, // camelCase — matches DB column
+        effDate: form.effDate,
+        jobCode: form.jobCode,
         deptCode: form.deptCode,
-        salary:   form.salary ? Number(form.salary) : null,
-      }
+        salary: form.salary ? Number(form.salary) : null,
+        record_status: "ACTIVE",
+        stamp: `Added by ${currentUser.email} on ${new Date().toISOString()}`,
+      };
 
-      const { error } = await supabase.from('job_history').insert(payload)
-      if (error) throw error
+      const { error } = await supabase.from("jobHistory").insert(payload);
+      if (error) throw error;
 
-      setForm(EMPTY)
-      onSuccess()
+      setForm(EMPTY);
+      onSuccess();
     } catch (err) {
-      setApiError(err.message)
+      setApiError(err.message);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold text-gray-700 uppercase tracking-widest">New Entry</p>
+        <p className="text-xs font-semibold text-gray-700 uppercase tracking-widest">
+          New Entry
+        </p>
         <button
           type="button"
           onClick={onCancel}
@@ -137,7 +154,7 @@ export default function AddJobHistoryForm({ empno, jobs, depts, onSuccess, onCan
             id="jh-effDate"
             type="date"
             value={form.effDate}
-            onChange={(e) => set('effDate', e.target.value)}
+            onChange={(e) => set("effDate", e.target.value)}
             required
           />
           <FieldError message={errors.effDate} />
@@ -149,12 +166,14 @@ export default function AddJobHistoryForm({ empno, jobs, depts, onSuccess, onCan
           <Select
             id="jh-jobCode"
             value={form.jobCode}
-            onChange={(e) => set('jobCode', e.target.value)}
+            onChange={(e) => set("jobCode", e.target.value)}
             required
           >
             <option value="">Select job…</option>
             {jobOptions.map(([code, desc]) => (
-              <option key={code} value={code}>{desc}</option>
+              <option key={code} value={code}>
+                {desc}
+              </option>
             ))}
           </Select>
           <FieldError message={errors.jobCode} />
@@ -166,12 +185,14 @@ export default function AddJobHistoryForm({ empno, jobs, depts, onSuccess, onCan
           <Select
             id="jh-deptCode"
             value={form.deptCode}
-            onChange={(e) => set('deptCode', e.target.value)}
+            onChange={(e) => set("deptCode", e.target.value)}
             required
           >
             <option value="">Select department…</option>
             {deptOptions.map(([code, name]) => (
-              <option key={code} value={code}>{name}</option>
+              <option key={code} value={code}>
+                {name}
+              </option>
             ))}
           </Select>
           <FieldError message={errors.deptCode} />
@@ -184,7 +205,7 @@ export default function AddJobHistoryForm({ empno, jobs, depts, onSuccess, onCan
             id="jh-salary"
             type="number"
             value={form.salary}
-            onChange={(e) => set('salary', e.target.value)}
+            onChange={(e) => set("salary", e.target.value)}
             placeholder="e.g. 55000"
           />
           <FieldError message={errors.salary} />
@@ -206,9 +227,9 @@ export default function AddJobHistoryForm({ empno, jobs, depts, onSuccess, onCan
           disabled={saving}
           className="px-4 py-2 text-xs rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60"
         >
-          {saving ? 'Saving…' : 'Save Entry'}
+          {saving ? "Saving…" : "Save Entry"}
         </button>
       </div>
     </div>
-  )
+  );
 }
