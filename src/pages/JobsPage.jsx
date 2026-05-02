@@ -110,9 +110,9 @@ export default function JobsPage() {
   async function fetchJobs() {
     setLoading(true);
     const { data, error } = await supabase
-      .from("jobs")
-      .select("job_code, job_desc, record_status")
-      .order("job_code", { ascending: true });
+      .from("job")
+      .select("jobCode, jobDesc, record_status")
+      .order("jobCode", { ascending: true });
 
     if (!error) setJobs(data ?? []);
     setLoading(false);
@@ -126,8 +126,8 @@ export default function JobsPage() {
   const filtered = jobs.filter((j) => {
     const q = search.toLowerCase();
     return (
-      j.job_code.toLowerCase().includes(q) ||
-      j.job_desc.toLowerCase().includes(q)
+      j.jobCode.toLowerCase().includes(q) ||
+      j.jobDesc.toLowerCase().includes(q)
     );
   });
 
@@ -223,13 +223,13 @@ export default function JobsPage() {
               ) : (
                 filtered.map((job) => (
                   <tr
-                    key={job.job_code}
+                    key={job.jobCode}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
                     <td className="px-4 py-3 font-mono text-xs text-gray-700 font-medium tracking-wide">
-                      {job.job_code}
+                      {job.jobCode}
                     </td>
-                    <td className="px-4 py-3 text-gray-800">{job.job_desc}</td>
+                    <td className="px-4 py-3 text-gray-800">{job.jobDesc}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={job.record_status} />
                     </td>

@@ -40,26 +40,26 @@ export default function DepartmentsPage() {
   const canAdd  = usePermission('DEPT_ADD')
   const canEdit = usePermission('DEPT_EDIT')
 
-  const [departments, setDepartments] = useState([])
+  const [department, setDepartment] = useState([])
   const [loading, setLoading]         = useState(true)
   const [search, setSearch]           = useState('')
   const [addOpen, setAddOpen]         = useState(false)
   const [editDept, setEditDept]       = useState(null)
 
-  async function fetchDepartments() {
+  async function fetchDepartment() {
     setLoading(true)
     const { data, error } = await supabase
-      .from('departments')
+      .from('department')
       .select('dept_code, dept_name')
       .order('dept_code', { ascending: true })
 
-    if (!error) setDepartments(data ?? [])
+    if (!error) setDepartment(data ?? [])
     setLoading(false)
   }
 
-  useEffect(() => { fetchDepartments() }, [])
+  useEffect(() => { fetchDepartment() }, [])
 
-  const filtered = departments.filter((d) => {
+  const filtered = department.filter((d) => {
     const q = search.toLowerCase()
     return (
       d.dept_code.toLowerCase().includes(q) ||
@@ -170,12 +170,12 @@ export default function DepartmentsPage() {
       <AddDeptModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSuccess={fetchDepartments}
+        onSuccess={fetchDepartment}
       />
       <EditDeptModal
         open={!!editDept}
         onClose={() => setEditDept(null)}
-        onSuccess={() => { setEditDept(null); fetchDepartments() }}
+        onSuccess={() => { setEditDept(null); fetchDepartment() }}
         department={editDept}
       />
     </div>
