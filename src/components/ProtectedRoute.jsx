@@ -7,7 +7,13 @@ export default function ProtectedRoute() {
   const { currentUser, loading } = useContext(UserRightsContext)
   const location = useLocation()
 
-  if (loading) return null
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    )
+  }
 
   // Not logged in — redirect to login
   if (!currentUser) return <Navigate to="/login" replace />
