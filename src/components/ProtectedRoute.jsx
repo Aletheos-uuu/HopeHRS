@@ -1,14 +1,12 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'          // add this
+import { useAuth } from '../context/AuthContext'
 import { useUserRights } from '../context/UserRightsContext'
-import AppShell from './AppShell'
 
 export default function ProtectedRoute() {
-  const { currentUser, loading: authLoading } = useAuth()       // currentUser lives here
+  const { currentUser, loading: authLoading } = useAuth()
   const { loading: rightsLoading } = useUserRights()
   const location = useLocation()
 
-  console.log('ProtectedRoute render:', { authLoading, rightsLoading, currentUser: !!currentUser });
   if (authLoading || rightsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -26,9 +24,5 @@ export default function ProtectedRoute() {
     return <Navigate to="/employees" replace />
   }
 
-  return (
-    <AppShell>
-      <Outlet />
-    </AppShell>
-  )
+  return <Outlet />
 }
