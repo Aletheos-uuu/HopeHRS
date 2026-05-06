@@ -14,20 +14,20 @@ export const UserRightsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchRights = async (userId) => {
+    console.log('fetchRights called:', userId);
     if (!userId) {
       setRights({});
       setLoading(false);
       return;
     }
-
     setLoading(true);
     try {
       // Fetch rights by joining UserModule_Rights with user_module
       const { data, error } = await supabase
         .from('UserModule_Rights')
         .select(`
-          rights_code,
-          right_value,
+          rights_id,
+          rights_value,
           user_module!inner (
             userId
           )
@@ -38,24 +38,24 @@ export const UserRightsProvider = ({ children }) => {
 
       // Transform array into O(1) Lookup Map
       // e.g., { EMP_VIEW: true, EMP_ADD: false, ... }
-      const rightsMap = data.reduce((acc, curr) => {
-        acc[curr.rights_code] = curr.right_value === 1;
-        return acc;
-      }, {});
+    const rightsMap = data.reduce((acc, curr) => {
+      acc[curr.rights_id] = curr.is_allowed === 1; 
+      return acc;
+    }, {});
 
       setRights(rightsMap);
     } catch (err) {
       console.error('Error fetching user rights:', err);
-      // Fallback empty rights to prevent crashing but gate everything
       setRights({});
     } finally {
+      console.log('fetchRights done → loading false');
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchRights(currentUser?.id);
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   return (
     <UserRightsContext.Provider value={{ rights, loading, refreshRights: () => fetchRights(currentUser?.id) }}>
