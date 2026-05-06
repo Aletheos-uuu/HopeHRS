@@ -18,11 +18,10 @@ export default function AuthCallback() {
         if (session?.user) {
           // Explicit "Login Guard" check as requested
           const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('user')
             .select('record_status')
-            .eq('id', session.user.id)
+            .eq('userId', session.user.id)
             .single();
-
           if (profileError) {
             // If profile doesn't exist yet, we might allow (or wait), 
             // but for strict guard we usually want to check it.
