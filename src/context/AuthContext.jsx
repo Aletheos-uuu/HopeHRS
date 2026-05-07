@@ -1,35 +1,49 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext({
   session: null,
   currentUser: null,
+  userRole: null,
+  employees: [],
   loading: true,
   signOut: () => {},
   authError: null,
 });
 
 export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
+  const [session, setSession]         = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
+  const [userRole, setUserRole]       = useState(null);
+  const [employees, setEmployees]     = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [authError, setAuthError]     = useState(null);
+
+  // Tracks whether the initial auth check has resolved.
+  // SIGNED_IN + INITIAL_SESSION both fire on page load — this ensures
+  // setLoading(false) only runs once, whichever event finishes first,
+  // and is never called again by subsequent auth events.
+
+  const fetchEmployees = async () => {
+    const { data, error } = await supabase
+      .from("employee_current_job")
+      .select("*");
+    console.log("fetchEmployees →", { count: data?.length, error });
+    if (!error && data) setEmployees(data);
+  };
 
   const checkUserStatus = async (user) => {
     if (!user) return null;
-
     try {
       const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("record_status")
-        .eq("id", user.id)
+        .from("user")
+        .select("record_status, user_type")
+        .eq("userId", user.id)
         .single();
 
       if (error) {
         if (error.code === "PGRST116") {
           console.warn("Profile not found for user:", user.id);
-          // If profile is missing, we allow login for now to prevent lockout
-          // In a strict app, you might want to return null instead.
           return user;
         }
         throw error;
@@ -37,91 +51,79 @@ export const AuthProvider = ({ children }) => {
 
       if (profile.record_status !== "ACTIVE") {
         await supabase.auth.signOut();
-        setAuthError(
-          `Account Inactive (${profile.record_status}). Please contact support.`,
-        );
+        setAuthError("Account Inactive. Please contact support.");
         return null;
       }
 
+      setUserRole(profile.user_type);
       setAuthError(null);
       return user;
     } catch (err) {
       console.error("Login Guard Error:", err);
-      // Fallback: allow the user in if the database check fails completely
-      // (e.g. table doesn't exist yet) to avoid blocking the developer.
       return user;
     }
   };
+useEffect(() => {
+  // One-time initial session check — always calls setLoading(false)
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    if (session?.user) {
+      const validatedUser = await checkUserStatus(session.user);
+      setSession(validatedUser ? session : null);
+      setCurrentUser(validatedUser ?? null);
+      if (validatedUser) fetchEmployees();
+    }
+    setLoading(false);
+  });
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
+  // Ongoing listener — never touches loading
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      console.log("auth event:", event);
+      if (event === "SIGNED_IN" && session?.user) {
         const validatedUser = await checkUserStatus(session.user);
         setSession(validatedUser ? session : null);
-        setCurrentUser(validatedUser);
+        setCurrentUser(validatedUser ?? null);
+        if (validatedUser) fetchEmployees();
+      } else if (event === "SIGNED_OUT") {
+        setSession(null);
+        setCurrentUser(null);
+        setUserRole(null);
+        setEmployees([]);
+        setAuthError(null);
       }
-      setLoading(false);
-    });
+    }
+  );
 
-    // Listen for changes on auth state (login, logout, etc.)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setLoading(true);
-      try {
-        if (
-          (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
-          session?.user
-        ) {
-          const validatedUser = await checkUserStatus(session.user);
-          setSession(validatedUser ? session : null);
-          setCurrentUser(validatedUser);
-        } else {
-          setSession(session);
-          setCurrentUser(session?.user ?? null);
-          if (event === "SIGNED_OUT") setAuthError(null);
-        }
-      } catch (err) {
-        console.error("Auth event error:", err);
-      } finally {
-        setLoading(false);
-      }
-    });
+  return () => subscription.unsubscribe();
+}, []);
 
-    return () => subscription.unsubscribe();
-  }, []);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error signing out:", error.message);
-    setSession(null);
-    setCurrentUser(null);
-    setAuthError(null);
+    // SIGNED_OUT event handles clearing state
   };
 
   return (
     <AuthContext.Provider
-      value={{ session, currentUser, loading, signOut, authError }}
+      value={{ session, currentUser, userRole, employees, loading, signOut, authError }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (context === undefined) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
+
 const PERMISSIONS = {
   IS_ADMIN: ["ADMIN", "SUPERADMIN"],
-  EMP_ADD: ["ADMIN", "SUPERADMIN"],
+  EMP_ADD:  ["ADMIN", "SUPERADMIN"],
   EMP_EDIT: ["ADMIN", "SUPERADMIN"],
-  EMP_DEL: ["ADMIN", "SUPERADMIN"],
+  EMP_DEL:  ["ADMIN", "SUPERADMIN"],
 };
 
 export function usePermission(permission) {
