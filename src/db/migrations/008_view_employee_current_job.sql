@@ -1,7 +1,7 @@
 -- 008_view_employee_current_job.sql
 -- HopeHRS — employee_current_job View
 
--- STEP 10: employee_current_job VIEW
+-- employee_current_job VIEW
 -- Latest active jobHistory per employee + job + dept names
 
 CREATE VIEW public.employee_current_job AS

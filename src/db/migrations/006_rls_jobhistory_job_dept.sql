@@ -1,7 +1,7 @@
 -- 006_rls_jobhistory_job_dept.sql
 -- HopeHRS — RLS Policies: jobHistory, job, department
 
--- STEP 8: RLS — jobHistory, job, department
+-- RLS — jobHistory, job, department
 
 
 ALTER TABLE public.jobHistory  ENABLE ROW LEVEL SECURITY;
