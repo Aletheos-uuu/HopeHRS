@@ -140,6 +140,7 @@ export default function JobHistoryPanel({ empNo }) {
   const canEdit = usePermission("JH_EDIT");
   const canDel = usePermission("JH_DEL");
   const { currentUser } = useAuth();
+  const showStamp = currentUser?.user_type !== 'USER';
 
   const [rows, setRows] = useState([]);
   const [job, setJob] = useState({}); // jobCode → jobDesc
@@ -288,7 +289,7 @@ export default function JobHistoryPanel({ empNo }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                {["Eff. Date", "Job", "Department", "Salary", "Stamp"].map(
+                {["Eff. Date", "Job", "Department", "Salary", ...(showStamp ? ["Stamp"] : [])].map(
                   (h) => (
                     <th
                       key={h}
@@ -321,15 +322,17 @@ export default function JobHistoryPanel({ empNo }) {
                   <td className="px-6 py-3.5 text-gray-600 tabular-nums">
                     {formatSalary(row.salary)}
                   </td>
-                  <td className="px-6 py-3.5">
-                    {row.stamp ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">
-                        {row.stamp}
-                      </span>
-                    ) : (
-                      <span className="text-gray-300">—</span>
-                    )}
-                  </td>
+                  {showStamp && (
+                    <td className="px-6 py-3.5">
+                      {row.stamp ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">
+                          {row.stamp}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                  )}
                   {hasActions && (
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

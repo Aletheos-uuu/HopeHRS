@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { usePermission } from '../context/AuthContext'
+import { useAuth, usePermission } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import AddDeptModal from '../components/departments/AddDeptModal'
 import EditDeptModal from '../components/departments/EditDeptModal'
@@ -91,6 +91,9 @@ function DeleteConfirm({ dept, onConfirm, onCancel, deleting }) {
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export default function DepartmentsPage() {
+  const { currentUser } = useAuth()
+  const showStamp = currentUser?.user_type !== 'USER'
+
   const canAdd  = usePermission('DEPT_ADD')
   const canEdit = usePermission('DEPT_EDIT')
   const canDel  = usePermission('DEPT_DEL')
@@ -107,7 +110,7 @@ export default function DepartmentsPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from('department')
-      .select('dept_code, dept_name, record_status')
+      .select('dept_code, dept_name, record_status, stamp')
       .order('dept_code', { ascending: true })
 
     if (!error) setDepartment(data ?? [])
@@ -205,6 +208,11 @@ export default function DepartmentsPage() {
                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
                   Status
                 </th>
+                {showStamp && (
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-32">
+                    Stamp
+                  </th>
+                )}
                 {(canEdit || canDel) && (
                   <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24">
                     Actions
@@ -215,13 +223,13 @@ export default function DepartmentsPage() {
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={(canEdit || canDel) ? 4 : 3} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)} className="px-4 py-10 text-center text-sm text-gray-400">
                     Loading…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={(canEdit || canDel) ? 4 : 3} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)} className="px-4 py-10 text-center text-sm text-gray-400">
                     {search ? 'No departments match your search.' : 'No departments found.'}
                   </td>
                 </tr>
@@ -235,6 +243,17 @@ export default function DepartmentsPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={dept.record_status} />
                     </td>
+                    {showStamp && (
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {dept.stamp ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">
+                            {dept.stamp}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                    )}
                     {(canEdit || canDel) && (
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">

@@ -133,10 +133,12 @@ function Forbidden() {
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export default function JobsPage() {
-  const { userRole } = useAuth();
+  const { userRole, currentUser } = useAuth();
   const canAdd = usePermission("JOB_ADD");
   const canEdit = usePermission("JOB_EDIT");
   const canDel = usePermission("JOB_DEL");
+
+  const showStamp = currentUser?.user_type !== 'USER';
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export default function JobsPage() {
     const { data, error } = await supabase
 
       .from("job")
-      .select("jobCode, jobDesc, record_status")
+      .select("jobCode, jobDesc, record_status, stamp")
       .order("jobCode", { ascending: true });
 
 
@@ -253,6 +255,11 @@ export default function JobsPage() {
                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
                   Status
                 </th>
+                {showStamp && (
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-32">
+                    Stamp
+                  </th>
+                )}
                 {(canEdit || canDel) && (
                   <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24">
                     Actions
@@ -264,7 +271,7 @@ export default function JobsPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={(canEdit || canDel) ? 4 : 3}
+                    colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)}
                     className="px-4 py-10 text-center text-sm text-gray-400"
                   >
                     Loading…
@@ -273,7 +280,7 @@ export default function JobsPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={(canEdit || canDel) ? 4 : 3}
+                    colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)}
                     className="px-4 py-10 text-center text-sm text-gray-400"
                   >
                     {search ? "No jobs match your search." : "No jobs found."}
@@ -294,6 +301,17 @@ export default function JobsPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={job.record_status} />
                     </td>
+                    {showStamp && (
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {job.stamp ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">
+                            {job.stamp}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                    )}
                     {(canEdit || canDel) && (
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">
