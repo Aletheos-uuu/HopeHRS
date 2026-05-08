@@ -195,7 +195,7 @@ export default function DeletedItemsPage() {
   // ── Page-level guard ─────────────────────────────────────────────────────
   // FIX: was comparing userRole === 'USER'; now uses user_type from schema.
   // Also guards against an unauthenticated/null currentUser.
-  if (!currentUser || userType === 'USER') return <Navigate to="/" replace />
+  if (!currentUser || userType === 'USER') return <Navigate to="/employees" replace />
 
   // ── URL-synced tab state ──────────────────────────────────────────────────
   const rawTab = searchParams.get('tab')

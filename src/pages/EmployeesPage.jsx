@@ -87,7 +87,9 @@ function PlusIcon() {
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export default function EmployeesPage() {
-  const { userRole, employees, loading } = useAuth()
+  const { userRole, currentUser, employees, loading } = useAuth()
+
+  const showStamp = currentUser?.user_type !== 'USER'
 
   // permission gates
   const isAdmin = usePermission('IS_ADMIN')
@@ -152,7 +154,7 @@ export default function EmployeesPage() {
   }
 
   // how many cols the "no results" cell should span
-  const colSpan = 7 + (isAdmin ? 1 : 0) + (canEdit || canDel ? 1 : 0)
+  const colSpan = 7 + (showStamp ? 1 : 0) + (canEdit || canDel ? 1 : 0)
 
   return (
     <div className="p-6 space-y-6">
@@ -222,7 +224,7 @@ export default function EmployeesPage() {
               <th className="px-4 py-3 text-left font-medium">Sep date</th>
               <th className="px-4 py-3 text-left font-medium">Current job</th>
               <th className="px-4 py-3 text-left font-medium">Status</th>
-              {isAdmin && (
+              {showStamp && (
                 <th className="px-4 py-3 text-left font-medium">Stamp</th>
               )}
               {(canEdit || canDel) && (
@@ -261,7 +263,7 @@ export default function EmployeesPage() {
                   <td className="px-4 py-3">
                     <StatusBadge status={emp.status} />
                   </td>
-                  {isAdmin && (
+                  {showStamp && (
                     <td className="px-4 py-3">
                       <StampBadge date={emp.stamp} />
                     </td>

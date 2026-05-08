@@ -3,10 +3,11 @@ import { useAuth } from '../../context/AuthContext'
 import { navItems } from './navItems'
 
 export default function SidebarNav({ onNavigate }) {
-  const { userRole } = useAuth()
+  const { currentUser } = useAuth()
+  const userType = currentUser?.user_type
 
   const visibleItems = navItems.filter((item) =>
-    item.allowedRoles === null || item.allowedRoles.includes(userRole)
+    item.allowedRoles === null || item.allowedRoles.includes(userType)
   )
 
   return (
