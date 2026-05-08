@@ -124,6 +124,9 @@ const PERMISSIONS = {
   EMP_ADD:  ["ADMIN", "SUPERADMIN"],
   EMP_EDIT: ["ADMIN", "SUPERADMIN"],
   EMP_DEL:  ["ADMIN", "SUPERADMIN"],
+  JH_ADD:   ["ADMIN", "SUPERADMIN"],
+  JH_EDIT:  ["ADMIN", "SUPERADMIN"],
+  JH_DEL:   ["ADMIN", "SUPERADMIN"],
 };
 
 export function usePermission(permission) {
