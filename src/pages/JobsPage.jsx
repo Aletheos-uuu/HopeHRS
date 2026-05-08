@@ -49,6 +49,47 @@ function PlusIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.576l-.66-6.6a.75.75 0 1 1 1.492-.149ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z" />
+    </svg>
+  );
+}
+
+function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.35)" }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-semibold text-gray-900">Remove job?</p>
+          <p className="text-xs text-gray-500">
+            <span className="font-medium text-gray-700">{job?.jobDesc}</span>
+          </p>
+          <p className="text-xs text-gray-400 mt-1">This will be soft-deleted and recoverable by an admin.</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onCancel} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">Cancel</button>
+          <button onClick={onConfirm} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60">
+            {deleting ? "Removing…" : "Remove"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── 403 inline component ────────────────────────────────────────────────────
 
 function Forbidden() {
@@ -95,12 +136,15 @@ export default function JobsPage() {
   const { userRole } = useAuth();
   const canAdd = usePermission("JOB_ADD");
   const canEdit = usePermission("JOB_EDIT");
+  const canDel = usePermission("JOB_DEL");
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editJob, setEditJob] = useState(null);
+  const [deleteJob, setDeleteJob] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // ── Page-level ADMIN+ guard ────────────────────────────────────────────
   const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
@@ -118,6 +162,18 @@ export default function JobsPage() {
 
     if (!error) setJobs(data ?? []);
     setLoading(false);
+  }
+
+  async function handleDelete() {
+    if (!deleteJob) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from("job")
+      .update({ record_status: "INACTIVE" })
+      .eq("jobCode", deleteJob.jobCode);
+    setDeleting(false);
+    setDeleteJob(null);
+    if (!error) fetchJobs();
   }
 
   useEffect(() => {
@@ -197,8 +253,8 @@ export default function JobsPage() {
                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
                   Status
                 </th>
-                {canEdit && (
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-20">
+                {(canEdit || canDel) && (
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24">
                     Actions
                   </th>
                 )}
@@ -208,7 +264,7 @@ export default function JobsPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={canEdit ? 4 : 3}
+                    colSpan={(canEdit || canDel) ? 4 : 3}
                     className="px-4 py-10 text-center text-sm text-gray-400"
                   >
                     Loading…
@@ -217,7 +273,7 @@ export default function JobsPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={canEdit ? 4 : 3}
+                    colSpan={(canEdit || canDel) ? 4 : 3}
                     className="px-4 py-10 text-center text-sm text-gray-400"
                   >
                     {search ? "No jobs match your search." : "No jobs found."}
@@ -238,14 +294,26 @@ export default function JobsPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={job.record_status} />
                     </td>
-                    {canEdit && (
+                    {(canEdit || canDel) && (
                       <td className="px-4 py-3 text-right">
-                        <IconButton
-                          onClick={() => setEditJob(job)}
-                          title="Edit job"
-                        >
-                          <EditIcon />
-                        </IconButton>
+                        <div className="flex justify-end gap-1">
+                          {canEdit && (
+                            <IconButton
+                              onClick={() => setEditJob(job)}
+                              title="Edit job"
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          )}
+                          {canDel && (
+                            <IconButton
+                              onClick={() => setDeleteJob(job)}
+                              title="Delete job"
+                            >
+                              <TrashIcon />
+                            </IconButton>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -271,6 +339,14 @@ export default function JobsPage() {
         }}
         job={editJob}
       />
+      {deleteJob && (
+        <DeleteConfirm
+          job={deleteJob}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteJob(null)}
+          deleting={deleting}
+        />
+      )}
     </div>
   );
 }

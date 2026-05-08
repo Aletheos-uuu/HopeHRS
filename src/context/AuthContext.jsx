@@ -127,6 +127,12 @@ const PERMISSIONS = {
   JH_ADD:   ["ADMIN", "SUPERADMIN"],
   JH_EDIT:  ["ADMIN", "SUPERADMIN"],
   JH_DEL:   ["ADMIN", "SUPERADMIN"],
+  JOB_ADD:  ["ADMIN", "SUPERADMIN"],
+  JOB_EDIT: ["ADMIN", "SUPERADMIN"],
+  JOB_DEL:  ["ADMIN", "SUPERADMIN"],
+  DEPT_ADD: ["ADMIN", "SUPERADMIN"],
+  DEPT_EDIT: ["ADMIN", "SUPERADMIN"],
+  DEPT_DEL: ["ADMIN", "SUPERADMIN"],
 };
 
 export function usePermission(permission) {
