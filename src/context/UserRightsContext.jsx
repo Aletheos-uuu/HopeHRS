@@ -26,8 +26,8 @@ export const UserRightsProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('UserModule_Rights')
         .select(`
-          rights_id,
-          rights_value,
+          rights_code,
+          right_value,
           user_module!inner (
             userId
           )
@@ -39,7 +39,7 @@ export const UserRightsProvider = ({ children }) => {
       // Transform array into O(1) Lookup Map
       // e.g., { EMP_VIEW: true, EMP_ADD: false, ... }
     const rightsMap = data.reduce((acc, curr) => {
-      acc[curr.rights_id] = curr.is_allowed === 1; 
+      acc[curr.rights_code] = curr.right_value === 1; 
       return acc;
     }, {});
 

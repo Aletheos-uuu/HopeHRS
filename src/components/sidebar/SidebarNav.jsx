@@ -1,14 +1,19 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { navItems } from './navItems'
+import { useUserRights } from '../../context/UserRightsContext'
 
 export default function SidebarNav({ onNavigate }) {
   const { currentUser } = useAuth()
+  const { rights } = useUserRights()
   const userType = currentUser?.user_type
 
-  const visibleItems = navItems.filter((item) =>
-    item.allowedRoles === null || item.allowedRoles.includes(userType)
-  )
+  const visibleItems = navItems.filter((item) => {
+    if (item.label === 'Admin') {
+      return rights?.ADM_USER === 1 || rights?.ADM_USER === true;
+    }
+    return item.allowedRoles === null || item.allowedRoles.includes(userType);
+  })
 
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
