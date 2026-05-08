@@ -34,27 +34,107 @@ function PlusIcon() {
   )
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.576l-.66-6.6a.75.75 0 1 1 1.492-.149ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z" />
+    </svg>
+  );
+}
+
+function StatusBadge({ status }) {
+  const active = status === "ACTIVE";
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+        active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"
+      }`}
+    >
+      {status || "ACTIVE"}
+    </span>
+  );
+}
+
+function DeleteConfirm({ dept, onConfirm, onCancel, deleting }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.35)" }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-semibold text-gray-900">Remove department?</p>
+          <p className="text-xs text-gray-500">
+            <span className="font-medium text-gray-700">{dept?.dept_name}</span>
+          </p>
+          <p className="text-xs text-gray-400 mt-1">This will be soft-deleted and recoverable by an admin.</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onCancel} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">Cancel</button>
+          <button onClick={onConfirm} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60">
+            {deleting ? "Removing…" : "Remove"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export default function DepartmentsPage() {
   const canAdd  = usePermission('DEPT_ADD')
   const canEdit = usePermission('DEPT_EDIT')
+  const canDel  = usePermission('DEPT_DEL')
 
   const [department, setDepartment] = useState([])
   const [loading, setLoading]         = useState(true)
   const [search, setSearch]           = useState('')
   const [addOpen, setAddOpen]         = useState(false)
   const [editDept, setEditDept]       = useState(null)
+  const [deleteDept, setDeleteDept]   = useState(null)
+  const [deleting, setDeleting]       = useState(false)
 
   async function fetchDepartment() {
     setLoading(true)
     const { data, error } = await supabase
       .from('department')
-      .select('dept_code, dept_name')
+      .select('dept_code, dept_name, record_status')
       .order('dept_code', { ascending: true })
 
     if (!error) setDepartment(data ?? [])
     setLoading(false)
+  }
+
+  async function handleDelete() {
+    if (!deleteDept) return;
+    setDeleting(true);
+    // Use the actual column name for the primary key in your view/table
+    // Usually it's deptCode or dept_code depending on how the view maps it.
+    // If update fails, check if the actual column name is deptCode.
+    const { error } = await supabase
+      .from("department")
+      .update({ record_status: "INACTIVE" })
+      .eq("deptCode", deleteDept.dept_code); 
+      // If it fails with "column deptCode not found", might need to try dept_code.
+    
+    // In Supabase, if the select returns dept_code but the table uses deptCode,
+    // the update needs to use the correct table column.
+    if (error) {
+       await supabase.from("department").update({ record_status: "INACTIVE" }).eq("dept_code", deleteDept.dept_code);
+    }
+
+    setDeleting(false);
+    setDeleteDept(null);
+    fetchDepartment();
   }
 
   useEffect(() => { fetchDepartment() }, [])
@@ -122,8 +202,11 @@ export default function DepartmentsPage() {
                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
                   Department Name
                 </th>
-                {canEdit && (
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-20">
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
+                  Status
+                </th>
+                {(canEdit || canDel) && (
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24">
                     Actions
                   </th>
                 )}
@@ -132,13 +215,13 @@ export default function DepartmentsPage() {
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={canEdit ? 3 : 2} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={(canEdit || canDel) ? 4 : 3} className="px-4 py-10 text-center text-sm text-gray-400">
                     Loading…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 3 : 2} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={(canEdit || canDel) ? 4 : 3} className="px-4 py-10 text-center text-sm text-gray-400">
                     {search ? 'No departments match your search.' : 'No departments found.'}
                   </td>
                 </tr>
@@ -149,14 +232,29 @@ export default function DepartmentsPage() {
                       {dept.dept_code}
                     </td>
                     <td className="px-4 py-3 text-gray-800">{dept.dept_name}</td>
-                    {canEdit && (
+                    <td className="px-4 py-3">
+                      <StatusBadge status={dept.record_status} />
+                    </td>
+                    {(canEdit || canDel) && (
                       <td className="px-4 py-3 text-right">
-                        <IconButton
-                          onClick={() => setEditDept(dept)}
-                          title="Edit department"
-                        >
-                          <EditIcon />
-                        </IconButton>
+                        <div className="flex justify-end gap-1">
+                          {canEdit && (
+                            <IconButton
+                              onClick={() => setEditDept(dept)}
+                              title="Edit department"
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          )}
+                          {canDel && (
+                            <IconButton
+                              onClick={() => setDeleteDept(dept)}
+                              title="Delete department"
+                            >
+                              <TrashIcon />
+                            </IconButton>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -181,6 +279,14 @@ export default function DepartmentsPage() {
         onSuccess={() => { setEditDept(null); fetchDepartment() }}
         department={editDept}
       />
+      {deleteDept && (
+        <DeleteConfirm
+          dept={deleteDept}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteDept(null)}
+          deleting={deleting}
+        />
+      )}
     </div>
   )
 }
