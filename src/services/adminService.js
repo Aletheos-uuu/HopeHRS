@@ -1,110 +1,88 @@
-// Admin Module API — Sprint 3, M1 PR-01
-// Handles user management for ADMIN and SUPERADMIN.
-// RULE: No operation (activate, deactivate, rights edit) may target a SUPERADMIN row.
-//       Enforced at both the service layer (guard clause) and at the DB layer (RLS).
-
-import { supabase } from '../supabaseClient';
-import { makeStamp } from '../utils/stamp';
+import { supabase } from '../lib/supabaseClient'
 
 /**
- * Fetch all users for the User Management page.
- * Returns all columns except password-related fields.
- * SUPERADMIN rows are included in the list so they can be displayed
- * (with buttons disabled in the UI by M4), but no mutations are allowed on them.
+ * adminService.js
  *
- * @returns {Promise<Array>} Array of user rows ordered by user_type then username.
+ * Service layer for the Admin Module (Adm_Mod).
+ * All three functions are SUPERADMIN-only operations; the RLS policies
+ * on the `user` table enforce this at the database level as well.
+ *
+ * RULE: No hard deletes. Deactivation sets record_status = 'INACTIVE'.
+ * RULE: SUPERADMIN rows are never touched — guarded here AND in RLS.
+ *
+ * Stamp format: "<ACTION> <userId> <ISO timestamp>"
+ * e.g. "DEACTIVATED user3 2025-09-01T10:22:00.000Z"
+ */
+
+function makeStamp(action, byUserId) {
+  return `${action} ${byUserId} ${new Date().toISOString()}`
+}
+
+/**
+ * Fetch all users.
+ * Returns every row from the `user` table including SUPERADMIN rows
+ * (so the UI can render them as disabled/locked).
+ * Columns: userId, username, firstname, lastname, email, user_type, record_status
  */
 export async function getUsers() {
   const { data, error } = await supabase
     .from('user')
-    .select('userId, username, firstName, lastName, email, user_type, record_status, stamp')
-    .order('user_type')
-    .order('username');
+    .select('userId, username, firstname, lastname, email, user_type, record_status')
+    .order('user_type', { ascending: true })
+    .order('username', { ascending: true })
 
-  if (error) {
-    console.error('[adminService] getUsers error:', error.message);
-    return [];
-  }
-
-  return data ?? [];
+  if (error) throw error
+  return data
 }
 
 /**
  * Activate a user account (set record_status = 'ACTIVE').
- * Blocked if the target user is a SUPERADMIN — returns an error object.
  *
- * @param {string} targetUserId - userId of the account to activate.
- * @param {string} actorUserId  - userId of the ADMIN/SUPERADMIN performing the action.
- * @returns {Promise<{error: string|null}>}
+ * @param {string} targetUserId  - userId of the account to activate
+ * @param {string} byUserId      - userId of the SUPERADMIN performing the action (for stamp)
+ * @throws if the target is a SUPERADMIN row (guard at service layer before DB call)
+ * @throws if Supabase returns an error
  */
-export async function activateUser(targetUserId, actorUserId) {
-  // --- Service-layer SUPERADMIN guard ---
-  const { data: targetRow, error: fetchError } = await supabase
-    .from('user')
-    .select('user_type')
-    .eq('userId', targetUserId)
-    .single();
-
-  if (fetchError) {
-    console.error('[adminService] activateUser fetch error:', fetchError.message);
-    return { error: fetchError.message };
+export async function activateUser(targetUserId, byUserId, targetUserType) {
+  if (targetUserType === 'SUPERADMIN') {
+    throw new Error('SUPERADMIN accounts cannot be modified.')
   }
-
-  if (targetRow?.user_type === 'SUPERADMIN') {
-    return { error: 'SUPERADMIN accounts cannot be modified.' };
-  }
-  // --- End guard ---
-
-  const stamp = makeStamp('ACTIVATED', actorUserId);
 
   const { error } = await supabase
     .from('user')
-    .update({ record_status: 'ACTIVE', stamp })
-    .eq('userId', targetUserId);
+    .update({
+      record_status: 'ACTIVE',
+      stamp: makeStamp('ACTIVATED', byUserId),
+    })
+    .eq('userId', targetUserId)
+    .neq('user_type', 'SUPERADMIN') // belt-and-suspenders; RLS is the real guard
 
-  if (error) {
-    console.error('[adminService] activateUser update error:', error.message);
-  }
-
-  return { error: error?.message ?? null };
+  if (error) throw error
 }
 
 /**
  * Deactivate a user account (set record_status = 'INACTIVE').
- * Blocked if the target user is a SUPERADMIN — returns an error object.
+ * This is a soft-deactivation — the user row is never deleted.
+ * A deactivated user cannot log in (login guard checks record_status).
  *
- * @param {string} targetUserId - userId of the account to deactivate.
- * @param {string} actorUserId  - userId of the ADMIN/SUPERADMIN performing the action.
- * @returns {Promise<{error: string|null}>}
+ * @param {string} targetUserId    - userId of the account to deactivate
+ * @param {string} byUserId        - userId of the SUPERADMIN performing the action
+ * @param {string} targetUserType  - user_type of the target (guard check)
+ * @throws if the target is a SUPERADMIN row
  */
-export async function deactivateUser(targetUserId, actorUserId) {
-  // --- Service-layer SUPERADMIN guard ---
-  const { data: targetRow, error: fetchError } = await supabase
-    .from('user')
-    .select('user_type')
-    .eq('userId', targetUserId)
-    .single();
-
-  if (fetchError) {
-    console.error('[adminService] deactivateUser fetch error:', fetchError.message);
-    return { error: fetchError.message };
+export async function deactivateUser(targetUserId, byUserId, targetUserType) {
+  if (targetUserType === 'SUPERADMIN') {
+    throw new Error('SUPERADMIN accounts cannot be modified.')
   }
-
-  if (targetRow?.user_type === 'SUPERADMIN') {
-    return { error: 'SUPERADMIN accounts cannot be modified.' };
-  }
-  // --- End guard ---
-
-  const stamp = makeStamp('DEACTIVATED', actorUserId);
 
   const { error } = await supabase
     .from('user')
-    .update({ record_status: 'INACTIVE', stamp })
-    .eq('userId', targetUserId);
+    .update({
+      record_status: 'INACTIVE',
+      stamp: makeStamp('DEACTIVATED', byUserId),
+    })
+    .eq('userId', targetUserId)
+    .neq('user_type', 'SUPERADMIN')
 
-  if (error) {
-    console.error('[adminService] deactivateUser update error:', error.message);
-  }
-
-  return { error: error?.message ?? null };
+  if (error) throw error
 }

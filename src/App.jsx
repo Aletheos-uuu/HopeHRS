@@ -7,7 +7,7 @@ import EmployeesPage from './pages/EmployeesPage'
 import EmployeeDetailPage from "./pages/JobHistoryPage";
 import JobsPage from './pages/JobsPage'
 import DepartmentsPage from './pages/DepartmentsPage'
-import AdminPage from './pages/AdminPage'
+import UserManagementPage from './pages/UserManagementPage'
 import DeletedItemsPage from './pages/DeletedItemsPage'
 import DashboardLayout from './components/DashboardLayout'
 
@@ -24,7 +24,7 @@ export default function App() {
           <Route path="/employees/:empNo" element={<EmployeeDetailPage />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<UserManagementPage />} />
           <Route path="/deleted-items" element={<DeletedItemsPage />} />
         </Route>
       </Route>
