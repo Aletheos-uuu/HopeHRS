@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
       const { data: profile, error } = await supabase
         .from("user")
         .select("record_status, user_type")
-        .eq("userId", user.id)
+        .eq("email", user.email)   
         .single();
 
       if (error) {
