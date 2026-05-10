@@ -176,33 +176,24 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
  * not receive pointer events in some browsers.
  */
 function SuperadminGuardedActions({ user, isSuperadmin, isBeingActedOn, onActivate, onDeactivate, mobile }) {
-  if (isSuperadmin) {
-    return (
-      <div
-        className="group relative flex items-center"
-        title="SUPERADMIN accounts cannot be modified"
-      >
-        <span className={`cursor-not-allowed text-xs text-gray-400 select-none ${mobile ? '' : 'whitespace-nowrap'}`}>
-          Protected
-        </span>
-        {/* Tooltip */}
+  const isActive = user.record_status === 'ACTIVE'
+  const isDisabled = isBeingActedOn || isSuperadmin
+
+  return (
+    <div className={`group relative flex gap-2 ${mobile ? 'flex-col' : 'items-center'}`}>
+      {/* Tooltip for Superadmin */}
+      {isSuperadmin && (
         <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden w-52 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-1.5 text-center text-xs text-white shadow-lg group-hover:block">
           SUPERADMIN accounts cannot be modified
           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
         </div>
-      </div>
-    )
-  }
+      )}
 
-  const isActive = user.record_status === 'ACTIVE'
-
-  return (
-    <div className={`flex gap-2 ${mobile ? 'flex-col' : 'items-center'}`}>
       {/* Activate — shown only when INACTIVE */}
       {!isActive && (
         <button
           onClick={() => onActivate(user)}
-          disabled={isBeingActedOn}
+          disabled={isDisabled}
           className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isBeingActedOn ? (
@@ -223,7 +214,7 @@ function SuperadminGuardedActions({ user, isSuperadmin, isBeingActedOn, onActiva
       {isActive && (
         <button
           onClick={() => onDeactivate(user)}
-          disabled={isBeingActedOn}
+          disabled={isDisabled}
           className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isBeingActedOn ? (
