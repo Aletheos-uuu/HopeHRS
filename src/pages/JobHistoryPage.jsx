@@ -21,7 +21,9 @@ function formatSalary(amount) {
 }
 
 function makeStamp(action, email) {
-  return `${action} by ${email} on ${new Date().toISOString()}`;
+  const date = new Date().toISOString().slice(0, 10); // "2026-05-12" not full ISO
+  const stamp = `${action} by ${email} on ${new Date().toISOString().slice(0, 10)}`.slice(0, 60);
+  return stamp.slice(0, 60); // hard cap at VARCHAR(60)
 }
 
 // ─── icons ───────────────────────────────────────────────────────────────────
@@ -285,7 +287,7 @@ export default function JobHistoryPage() {
         .from("jobhistory")
         .update({
           record_status: "INACTIVE",
-          stamp: makeStamp("DELETED", currentUser.email),
+          stamp: `DEL by ${currentUser.email} on ${new Date().toISOString().slice(0, 10)}`.slice(0, 60),
         })
         .eq("empno", deleteTarget.empno)
         .eq("jobcode", deleteTarget.jobcode)
