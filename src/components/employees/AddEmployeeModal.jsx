@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
-const GENDER_OPTIONS = ['M', 'F', 'Other']
+const GENDER_OPTIONS = ['M', 'F']
 
 const EMPTY_FORM = {
   empno:     '',
@@ -57,8 +57,8 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
     setApiError('')
 
     const { data, error } = await supabase
-      .from('employees')
-      .insert([{ ...form, status: 'ACTIVE' }])
+      .from('employee')
+      .insert([{ ...form, record_status: 'ACTIVE' }])
       .select()
       .single()
 

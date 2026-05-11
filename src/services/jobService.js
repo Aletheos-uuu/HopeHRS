@@ -1,11 +1,10 @@
 import { supabase } from '../lib/supabaseClient'
 
-// GET — USER sees only ACTIVE, ADMIN/SUPERADMIN sees all
 export async function getJobs(userType) {
   let query = supabase
     .from('job')
     .select('*')
-    .order('jobCode', { ascending: true })
+    .order('jobcode', { ascending: true })
 
   if (userType === 'USER') query = query.eq('record_status', 'ACTIVE')
 
@@ -14,7 +13,6 @@ export async function getJobs(userType) {
   return data
 }
 
-// ADD
 export async function addJob(jobData, currentUser) {
   const { data, error } = await supabase
     .from('job')
@@ -29,7 +27,6 @@ export async function addJob(jobData, currentUser) {
   return data
 }
 
-// UPDATE
 export async function updateJob(jobCode, updates, currentUser) {
   const { data, error } = await supabase
     .from('job')
@@ -37,14 +34,13 @@ export async function updateJob(jobCode, updates, currentUser) {
       ...updates,
       stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`
     })
-    .eq('jobCode', jobCode)
+    .eq('jobcode', jobCode)
     .select()
 
   if (error) throw error
   return data
 }
 
-// SOFT DELETE
 export async function softDeleteJob(jobCode, currentUser) {
   const { data, error } = await supabase
     .from('job')
@@ -52,14 +48,13 @@ export async function softDeleteJob(jobCode, currentUser) {
       record_status: 'INACTIVE',
       stamp: `Deleted by ${currentUser.email} on ${new Date().toISOString()}`
     })
-    .eq('jobCode', jobCode)
+    .eq('jobcode', jobCode)
     .select()
 
   if (error) throw error
   return data
 }
 
-// RECOVER
 export async function recoverJob(jobCode, currentUser) {
   const { data, error } = await supabase
     .from('job')
@@ -67,7 +62,7 @@ export async function recoverJob(jobCode, currentUser) {
       record_status: 'ACTIVE',
       stamp: `Recovered by ${currentUser.email} on ${new Date().toISOString()}`
     })
-    .eq('jobCode', jobCode)
+    .eq('jobcode', jobCode)
     .select()
 
   if (error) throw error

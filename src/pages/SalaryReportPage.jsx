@@ -48,8 +48,8 @@ export default function SalaryReportPage() {
   const highestJob = data[0] ?? null
 
   const columns = [
-    { key: 'jobCode', label: 'Code' },
-    { key: 'jobDesc', label: 'Job title' },
+    { key: 'jobcode', label: 'Code' },
+    { key: 'jobdesc', label: 'Job title' },
     {
       key: 'employee_count',
       label: 'Assignments',
@@ -114,7 +114,7 @@ export default function SalaryReportPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-4 col-span-2 sm:col-span-1">
             <p className="text-xs text-gray-500">Highest paid role</p>
             <p className="mt-1 text-lg font-semibold text-gray-900 truncate">
-              {highestJob ? `${highestJob.jobDesc} (${highestJob.jobCode})` : '—'}
+              {highestJob ? `${highestJob.jobdesc} (${highestJob.jobcode})` : '—'}
             </p>
           </div>
         </div>

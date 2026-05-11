@@ -1,37 +1,39 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../context/AuthContext'
 
 export default function SoftDeleteConfirmDialog({ open, employee, onClose, onSuccess }) {
   const [deleting, setDeleting] = useState(false)
   const [apiError, setApiError] = useState('')
+  const { currentUser } = useAuth()
 
   if (!open || !employee) return null
 
   async function handleConfirm() {
-  setDeleting(true)
-  setApiError('')
+    setDeleting(true)
+    setApiError('')
 
-  const today = new Date().toISOString().split('T')[0]
-  const stamp = `DEL by ${employee.empno} on ${today}`
+    const today = new Date().toISOString().split('T')[0]
+    const stamp = `DEL by ${currentUser.email} on ${today}`
 
-  const { error } = await supabase
-    .from('employee')              // ✅ no s
-    .update({
-      record_status: 'INACTIVE',   // ✅ correct column
-      sepdate: today,              // ✅ lowercase
-      stamp: stamp.slice(0, 60),  // ✅ within VARCHAR(60)
-    })
-    .eq('empno', employee.empno)
+    const { error } = await supabase
+      .from('employee')
+      .update({
+        record_status: 'INACTIVE',
+        sepdate: today,
+        stamp: stamp.slice(0, 60),
+      })
+      .eq('empno', employee.empno)
 
-  setDeleting(false)
+    setDeleting(false)
 
-  if (error) {
-    setApiError(error.message)
-    return
+    if (error) {
+      setApiError(error.message)
+      return
+    }
+
+    onSuccess?.(employee.empno)
   }
-
-  onSuccess?.(employee.empno)
-}
 
   function handleClose() {
     if (deleting) return

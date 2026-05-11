@@ -8,9 +8,9 @@ import ReportTable from '../components/reports/ReportTable'
  * Route: /reports/employee-history
  *
  * Two-step page:
- *   1. EmployeeSelector — searchable dropdown of all ACTIVE employees
- *   2. On selection, fetches and displays the full chronological job
- *      history for that employee via getEmployeeFullHistory(empNo)
+ * 1. EmployeeSelector — searchable dropdown of all ACTIVE employees
+ * 2. On selection, fetches and displays the full chronological job
+ * history for that employee via getEmployeeFullHistory(empNo)
  */
 
 function formatDate(val) {
@@ -90,16 +90,16 @@ export default function EmployeeHistoryReportPage() {
 
   const columns = [
     {
-      key: 'effDate',
+      key: 'effdate',
       label: 'Effective date',
       render: (val) => (
         <span className="font-mono text-xs text-gray-600">{formatDate(val)}</span>
       ),
     },
-    { key: 'jobCode', label: 'Code' },
-    { key: 'jobDesc', label: 'Job title' },
-    { key: 'deptCode', label: 'Dept code' },
-    { key: 'deptName', label: 'Department' },
+    { key: 'jobcode', label: 'Code' },
+    { key: 'jobdesc', label: 'Job title' },
+    { key: 'deptcode', label: 'Dept code' },
+    { key: 'deptname', label: 'Department' },
     {
       key: 'salary',
       label: 'Salary',
