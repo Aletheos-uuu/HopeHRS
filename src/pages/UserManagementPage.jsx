@@ -22,8 +22,8 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
  *   4. Never allow action on a SUPERADMIN row (guarded in service + UI)
  */
 export default function UserManagementPage() {
-  const { currentUser } = useAuth()
-
+  const { currentUser,userRole } = useAuth()
+  console.log('UserManagementPage:', { currentUser, userRole })
   // Route guard — only SUPERADMIN
   if (!currentUser || currentUser.user_type !== 'SUPERADMIN') {
     return <Navigate to="/employees" replace />
@@ -59,6 +59,7 @@ function UserManagementContent({ currentUser }) {
       setIsLoading(true)
       setError(null)
       const data = await getUsers()
+      console.log('users fetched:', data)
       setUsers(data)
     } catch (err) {
       setError('Failed to load users. Please try again.')
