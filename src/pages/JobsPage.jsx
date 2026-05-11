@@ -83,25 +83,6 @@ function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
   );
 }
 
-function Forbidden() {
-  const navigate = useNavigate();
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-      <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-500">
-          <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">Access Restricted</h2>
-      <p className="text-sm text-gray-500 max-w-xs mb-6">
-        You don't have permission to view this page. Contact your administrator if you think this is a mistake.
-      </p>
-      <button onClick={() => navigate("/")} className="px-4 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors">
-        Go to Dashboard
-      </button>
-    </div>
-  );
-}
 
 export default function JobsPage() {
   const { userRole, currentUser } = useAuth();
@@ -119,35 +100,39 @@ export default function JobsPage() {
   const [deleteJob, setDeleteJob] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
-  if (!isAdmin) return <Forbidden />;
 
   async function fetchJobs() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("job")
-      // ✅ was "jobCode, jobDesc, record_status, stamp"
-      .select("jobcode, jobdesc, record_status, stamp")
-      // ✅ was "jobCode"
-      .order("jobcode", { ascending: true });
+  setLoading(true);
+  let query = supabase
+    .from("job")
+    .select("jobcode, jobdesc, record_status, stamp")
+    .order("jobcode", { ascending: true });
 
-    if (!error) setJobs(data ?? []);
-    setLoading(false);
+  if (currentUser?.user_type === "USER") {
+    query = query.eq("record_status", "ACTIVE");
   }
+
+  const { data, error } = await query;
+  if (!error) setJobs(data ?? []);
+  setLoading(false);
+}
 
   async function handleDelete() {
-    if (!deleteJob) return;
-    setDeleting(true);
-    const { error } = await supabase
-      .from("job")
-      .update({ record_status: "INACTIVE" })
-      // ✅ was "jobCode" + deleteJob.jobCode
-      .eq("jobcode", deleteJob.jobcode);
-    if (error) console.error("Delete failed:", error);
-    setDeleting(false);
-    setDeleteJob(null);
-    if (!error) fetchJobs();
-  }
+  if (!deleteJob) return;
+  setDeleting(true);
+  const today = new Date().toISOString().slice(0, 10);
+  const { error } = await supabase
+    .from("job")
+    .update({
+      record_status: "INACTIVE",
+      stamp: `DEL by ${currentUser.email} on ${today}`.slice(0, 60), // ✅ add stamp
+    })
+    .eq("jobcode", deleteJob.jobcode);
+  if (error) console.error("Delete failed:", error);
+  setDeleting(false);
+  setDeleteJob(null);
+  if (!error) fetchJobs();
+}
 
   useEffect(() => {
     fetchJobs();

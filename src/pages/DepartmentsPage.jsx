@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner'
 import EmptyState from '../components/ui/EmptyState'
 import TableSkeleton from '../components/ui/TableSkeleton'
 
+
 function IconButton({ onClick, title, children }) {
   return (
     <button
@@ -95,30 +96,37 @@ export default function DepartmentsPage() {
   const [deleting, setDeleting]     = useState(false)
 
   async function fetchDepartment() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('department')
-      // ✅ was 'dept_code, dept_name, record_status, stamp'
-      .select('deptcode, deptname, record_status, stamp')
-      // ✅ was 'dept_code'
-      .order('deptcode', { ascending: true })
-    if (!error) setDepartment(data ?? [])
-    setLoading(false)
+  setLoading(true);
+  let query = supabase
+    .from("department")
+    .select("deptcode, deptname, record_status, stamp")
+    .order("deptcode", { ascending: true });
+
+  if (currentUser?.user_type === "USER") {
+    query = query.eq("record_status", "ACTIVE");
   }
 
+  const { data, error } = await query;
+  if (!error) setDepartment(data ?? []);
+  setLoading(false);
+}
+
   async function handleDelete() {
-    if (!deleteDept) return
-    setDeleting(true)
-    const { error } = await supabase
-      .from('department')
-      .update({ record_status: 'INACTIVE' })
-      // ✅ was 'deptCode' then 'dept_code' — correct column is 'deptcode'
-      .eq('deptcode', deleteDept.deptcode)
-    if (error) console.error('Delete failed:', error)
-    setDeleting(false)
-    setDeleteDept(null)
-    fetchDepartment()
-  }
+  if (!deleteDept) return;
+  setDeleting(true);
+  const today = new Date().toISOString().slice(0, 10);
+  const { error } = await supabase
+    .from("department")
+    .update({
+      record_status: "INACTIVE",
+      stamp: `DEL by ${currentUser.email} on ${today}`.slice(0, 60), // ✅ add stamp
+    })
+    .eq("deptcode", deleteDept.deptcode);
+  if (error) console.error("Delete failed:", error);
+  setDeleting(false);
+  setDeleteDept(null);
+  fetchDepartment();
+}
 
   useEffect(() => { fetchDepartment() }, [])
 
