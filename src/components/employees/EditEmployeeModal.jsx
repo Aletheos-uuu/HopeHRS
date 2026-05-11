@@ -18,7 +18,7 @@ function FormField({ label, error, children }) {
 const inputCls =
   'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 disabled:opacity-50'
 
-export default function EditEmployeeModal({ open, employee, onClose, onSuccess }) {
+export default function EditEmployeeModal({ open, employee, onClose, onSuccess, currentUser }) {
   const [form, setForm]         = useState({})
   const [errors, setErrors]     = useState({})
   const [saving, setSaving]     = useState(false)
@@ -72,6 +72,7 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess }
         hiredate:  form.hiredate,
         sepdate:   form.sepdate || null,
         record_status:    form.record_status,
+        stamp: `EDIT|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`,
       })
       .eq('empno', employee.empno)
       .select()

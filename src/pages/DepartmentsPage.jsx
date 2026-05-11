@@ -322,6 +322,7 @@ export default function DepartmentsPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchDepartment}
+        currentUser={currentUser}
       />
       <EditDeptModal
         open={!!editDept}
@@ -331,6 +332,7 @@ export default function DepartmentsPage() {
           fetchDepartment();
         }}
         department={editDept}
+        currentUser={currentUser}
       />
       {deleteDept && (
         <DeleteConfirm

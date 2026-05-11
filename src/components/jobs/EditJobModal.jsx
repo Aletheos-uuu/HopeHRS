@@ -7,7 +7,7 @@ function FieldError({ msg }) {
   return <p className="mt-1 text-xs text-red-500">{msg}</p>
 }
 
-export default function EditJobModal({ open, onClose, onSuccess, job }) {
+export default function EditJobModal({ open, onClose, onSuccess, job, currentUser }) {
   const [form, setForm] = useState({ jobDesc: '', record_status: 'ACTIVE' })
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
@@ -51,6 +51,7 @@ export default function EditJobModal({ open, onClose, onSuccess, job }) {
       .update({
         jobdesc: form.jobDesc.trim(),
         record_status: form.record_status,
+        stamp: `EDIT|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`,
       })
       .eq('jobcode', job.jobcode)
 

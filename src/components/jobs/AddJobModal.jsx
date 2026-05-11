@@ -1,69 +1,75 @@
-import { useState } from 'react'
-import Modal from '../Modal'
-import { supabase } from '../../lib/supabaseClient'
+import { useState } from "react";
+import Modal from "../Modal";
+import { supabase } from "../../lib/supabaseClient";
 
-const EMPTY = { jobCode: '', jobDesc: '', record_status: 'ACTIVE' }
+const EMPTY = { jobCode: "", jobDesc: "", record_status: "ACTIVE" };
 
 function FieldError({ msg }) {
-  if (!msg) return null
-  return <p className="mt-1 text-xs text-red-500">{msg}</p>
+  if (!msg) return null;
+  return <p className="mt-1 text-xs text-red-500">{msg}</p>;
 }
 
-export default function AddJobModal({ open, onClose, onSuccess }) {
-  const [form, setForm] = useState(EMPTY)
-  const [errors, setErrors] = useState({})
-  const [saving, setSaving] = useState(false)
-  const [serverError, setServerError] = useState('')
+export default function AddJobModal({ open, onClose, onSuccess, currentUser }) {
+  const [form, setForm] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-    setServerError('')
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setServerError("");
   }
 
   function validate() {
-    const errs = {}
-    if (!form.jobCode.trim()) errs.jobCode = 'Job code is required.'
-    else if (form.jobCode.trim().length > 20) errs.jobCode = 'Max 20 characters.'
-    if (!form.jobDesc.trim()) errs.jobDesc = 'Job description is required.'
-    else if (form.jobDesc.trim().length > 100) errs.jobDesc = 'Max 100 characters.'
-    return errs
-  }
+  const errs = {}
+  if (!form.jobCode.trim()) errs.jobCode = 'Job code is required.'
+  else if (form.jobCode.trim().length > 4)   // change 20 to 4
+    errs.jobCode = 'Max 4 characters.'
+  if (!form.jobDesc.trim()) errs.jobDesc = 'Job description is required.'
+  else if (form.jobDesc.trim().length > 20)  // change 100 to 20 — jobdesc is VARCHAR(20)
+    errs.jobDesc = 'Max 20 characters.'
+  return errs
+}
 
   async function handleSubmit() {
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
 
-    setSaving(true)
-    setServerError('')
+    setSaving(true);
+    setServerError("");
 
-    const { error } = await supabase.from('job').insert({
+    const { error } = await supabase.from("job").insert({
       jobcode: form.jobCode.trim().toUpperCase(),
       jobdesc: form.jobDesc.trim(),
       record_status: form.record_status,
-    })
+      stamp: `ADD|${currentUser?.email ?? "unknown"}|${new Date().toISOString().slice(0, 10)}`,
+    });
 
-    setSaving(false)
+    setSaving(false);
 
     if (error) {
-      if (error.code === '23505') {
-        setErrors({ jobCode: 'This job code already exists.' })
+      if (error.code === "23505") {
+        setErrors({ jobCode: "This job code already exists." });
       } else {
-        setServerError(error.message)
+        setServerError(error.message);
       }
-      return
+      return;
     }
 
-    handleClose(true)
+    handleClose(true);
   }
 
   function handleClose(saved = false) {
-    setForm(EMPTY)
-    setErrors({})
-    setServerError('')
-    onClose()
-    if (saved) onSuccess?.()
+    setForm(EMPTY);
+    setErrors({});
+    setServerError("");
+    onClose();
+    if (saved) onSuccess?.();
   }
 
   return (
@@ -81,7 +87,9 @@ export default function AddJobModal({ open, onClose, onSuccess }) {
             maxLength={20}
             placeholder="e.g. DEV-SR"
             className={`w-full px-3 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-              errors.jobCode ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'
+              errors.jobCode
+                ? "border-red-400 bg-red-50"
+                : "border-gray-200 bg-gray-50 focus:bg-white"
             }`}
           />
           <FieldError msg={errors.jobCode} />
@@ -99,7 +107,9 @@ export default function AddJobModal({ open, onClose, onSuccess }) {
             maxLength={100}
             placeholder="e.g. Senior Developer"
             className={`w-full px-3 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-              errors.jobDesc ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'
+              errors.jobDesc
+                ? "border-red-400 bg-red-50"
+                : "border-gray-200 bg-gray-50 focus:bg-white"
             }`}
           />
           <FieldError msg={errors.jobDesc} />
@@ -142,10 +152,10 @@ export default function AddJobModal({ open, onClose, onSuccess }) {
             disabled={saving}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 disabled:opacity-60"
           >
-            {saving ? 'Saving…' : 'Add Job'}
+            {saving ? "Saving…" : "Add Job"}
           </button>
         </div>
       </div>
     </Modal>
-  )
+  );
 }
