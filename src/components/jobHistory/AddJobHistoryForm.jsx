@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
+
 // ─── field components ─────────────────────────────────────────────────────────
 
 function Label({ htmlFor, children }) {
@@ -58,12 +59,12 @@ function FieldError({ message }) {
 
 // ─── defaults ─────────────────────────────────────────────────────────────────
 
-const EMPTY = { effDate: "", jobCode: "", deptCode: "", salary: "" };
+const EMPTY = { effdate: "", jobcode: "", deptcode: "", salary: "" };
 
 // ─── form ─────────────────────────────────────────────────────────────────────
 
 export default function AddJobHistoryForm({
-  empno,
+  empno,   // BUG FIX: was "empNo" in the parent's prop — prop name is empno (lowercase)
   job,
   depts,
   onSuccess,
@@ -74,8 +75,11 @@ export default function AddJobHistoryForm({
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState(null);
   const { currentUser } = useAuth();
-  const jobOptions = Object.entries(job); // [[jobCode, jobDesc], ...]
-  const deptOptions = Object.entries(depts); // [[deptCode, deptName], ...]
+
+  // BUG FIX: job and depts are { code → name } objects — Object.entries is correct,
+  // but the keys from Supabase are lowercase: jobcode / jobdesc, deptcode / deptname.
+  const jobOptions = Object.entries(job);   // [[jobcode, jobdesc], ...]
+  const deptOptions = Object.entries(depts); // [[deptcode, deptname], ...]
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -84,9 +88,9 @@ export default function AddJobHistoryForm({
 
   function validate() {
     const errs = {};
-    if (!form.effDate) errs.effDate = "Effective date is required.";
-    if (!form.jobCode) errs.jobCode = "Job is required.";
-    if (!form.deptCode) errs.deptCode = "Department is required.";
+    if (!form.effdate) errs.effdate = "Effective date is required.";
+    if (!form.jobcode) errs.jobcode = "Job is required.";
+    if (!form.deptcode) errs.deptcode = "Department is required.";
     if (form.salary && isNaN(Number(form.salary)))
       errs.salary = "Salary must be a number.";
     return errs;
@@ -103,17 +107,19 @@ export default function AddJobHistoryForm({
     setSaving(true);
     setApiError(null);
     try {
+      // BUG FIX: All column names must be lowercase to match Supabase schema.
+      // Original had camelCase: empno, effDate, jobCode, deptCode — all wrong.
       const payload = {
-        empNo: empno, // camelCase — matches DB column
-        effDate: form.effDate,
-        jobCode: form.jobCode,
-        deptCode: form.deptCode,
+        empno: empno,
+        effdate: form.effdate,
+        jobcode: form.jobcode,
+        deptcode: form.deptcode,
         salary: form.salary ? Number(form.salary) : null,
         record_status: "ACTIVE",
         stamp: `Added by ${currentUser.email} on ${new Date().toISOString()}`,
       };
 
-      const { error } = await supabase.from("jobHistory").insert(payload);
+      const { error } = await supabase.from("jobhistory").insert(payload);
       if (error) throw error;
 
       setForm(EMPTY);
@@ -149,24 +155,24 @@ export default function AddJobHistoryForm({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Effective Date */}
         <div>
-          <Label htmlFor="jh-effDate">Effective Date *</Label>
+          <Label htmlFor="jh-effdate">Effective Date *</Label>
           <Input
-            id="jh-effDate"
+            id="jh-effdate"
             type="date"
-            value={form.effDate}
-            onChange={(e) => set("effDate", e.target.value)}
+            value={form.effdate}
+            onChange={(e) => set("effdate", e.target.value)}
             required
           />
-          <FieldError message={errors.effDate} />
+          <FieldError message={errors.effdate} />
         </div>
 
         {/* Job */}
         <div>
-          <Label htmlFor="jh-jobCode">Job *</Label>
+          <Label htmlFor="jh-jobcode">Job *</Label>
           <Select
-            id="jh-jobCode"
-            value={form.jobCode}
-            onChange={(e) => set("jobCode", e.target.value)}
+            id="jh-jobcode"
+            value={form.jobcode}
+            onChange={(e) => set("jobcode", e.target.value)}
             required
           >
             <option value="">Select job…</option>
@@ -176,16 +182,16 @@ export default function AddJobHistoryForm({
               </option>
             ))}
           </Select>
-          <FieldError message={errors.jobCode} />
+          <FieldError message={errors.jobcode} />
         </div>
 
         {/* Department */}
         <div>
-          <Label htmlFor="jh-deptCode">Department *</Label>
+          <Label htmlFor="jh-deptcode">Department *</Label>
           <Select
-            id="jh-deptCode"
-            value={form.deptCode}
-            onChange={(e) => set("deptCode", e.target.value)}
+            id="jh-deptcode"
+            value={form.deptcode}
+            onChange={(e) => set("deptcode", e.target.value)}
             required
           >
             <option value="">Select department…</option>
@@ -195,7 +201,7 @@ export default function AddJobHistoryForm({
               </option>
             ))}
           </Select>
-          <FieldError message={errors.deptCode} />
+          <FieldError message={errors.deptcode} />
         </div>
 
         {/* Salary */}

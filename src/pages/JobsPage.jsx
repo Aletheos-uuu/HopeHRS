@@ -6,8 +6,6 @@ import { supabase } from "../lib/supabaseClient";
 import AddJobModal from "../components/jobs/AddJobModal";
 import EditJobModal from "../components/jobs/EditJobModal";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
 function StatusBadge({ status }) {
   const active = status === "ACTIVE";
   return (
@@ -68,20 +66,43 @@ function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          <svg
+            className="w-5 h-5 text-red-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
           </svg>
         </div>
         <div className="text-center space-y-1">
           <p className="text-sm font-semibold text-gray-900">Remove job?</p>
+          {/* ✅ was job?.jobDesc */}
           <p className="text-xs text-gray-500">
-            <span className="font-medium text-gray-700">{job?.jobDesc}</span>
+            <span className="font-medium text-gray-700">{job?.jobdesc}</span>
           </p>
-          <p className="text-xs text-gray-400 mt-1">This will be soft-deleted and recoverable by an admin.</p>
+          <p className="text-xs text-gray-400 mt-1">
+            This will be soft-deleted and recoverable by an admin.
+          </p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onCancel} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">Cancel</button>
-          <button onClick={onConfirm} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60">
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
+          >
             {deleting ? "Removing…" : "Remove"}
           </button>
         </div>
@@ -90,55 +111,13 @@ function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
   );
 }
 
-// ─── 403 inline component ────────────────────────────────────────────────────
-
-function Forbidden() {
-  const navigate = useNavigate();
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-      <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="text-red-500"
-        >
-          <path
-            d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">
-        Access Restricted
-      </h2>
-      <p className="text-sm text-gray-500 max-w-xs mb-6">
-        You don't have permission to view this page. Contact your administrator
-        if you think this is a mistake.
-      </p>
-      <button
-        onClick={() => navigate("/")}
-        className="px-4 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-      >
-        Go to Dashboard
-      </button>
-    </div>
-  );
-}
-
-// ─── main page ───────────────────────────────────────────────────────────────
-
 export default function JobsPage() {
   const { userRole, currentUser } = useAuth();
   const canAdd = usePermission("JOB_ADD");
   const canEdit = usePermission("JOB_EDIT");
   const canDel = usePermission("JOB_DEL");
 
-  const showStamp = currentUser?.user_type !== 'USER';
+  const showStamp = currentUser?.user_type !== "USER";
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,20 +127,18 @@ export default function JobsPage() {
   const [deleteJob, setDeleteJob] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // ── Page-level ADMIN+ guard ────────────────────────────────────────────
-  const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
-  if (!isAdmin) return <Forbidden />;
-
-  // ── Data fetch ────────────────────────────────────────────────────────
   async function fetchJobs() {
     setLoading(true);
-    const { data, error } = await supabase
-
+    let query = supabase
       .from("job")
-      .select("jobCode, jobDesc, record_status, stamp")
-      .order("jobCode", { ascending: true });
+      .select("jobcode, jobdesc, record_status, stamp")
+      .order("jobcode", { ascending: true });
 
+    if (currentUser?.user_type === "USER") {
+      query = query.eq("record_status", "ACTIVE");
+    }
 
+    const { data, error } = await query;
     if (!error) setJobs(data ?? []);
     setLoading(false);
   }
@@ -169,10 +146,15 @@ export default function JobsPage() {
   async function handleDelete() {
     if (!deleteJob) return;
     setDeleting(true);
+    const today = new Date().toISOString().slice(0, 10);
     const { error } = await supabase
       .from("job")
-      .update({ record_status: "INACTIVE" })
-      .eq("jobCode", deleteJob.jobCode);
+      .update({
+        record_status: "INACTIVE",
+        stamp: `DEL by ${currentUser.email} on ${today}`.slice(0, 60), // ✅ add stamp
+      })
+      .eq("jobcode", deleteJob.jobcode);
+    if (error) console.error("Delete failed:", error);
     setDeleting(false);
     setDeleteJob(null);
     if (!error) fetchJobs();
@@ -182,20 +164,16 @@ export default function JobsPage() {
     fetchJobs();
   }, []);
 
-  // ── Derived list ─────────────────────────────────────────────────────
   const filtered = jobs.filter((j) => {
     const q = search.toLowerCase();
+    // ✅ was j.jobCode + j.jobDesc
     return (
-      j.jobCode.toLowerCase().includes(q) ||
-      j.jobDesc.toLowerCase().includes(q)
-
+      j.jobcode.toLowerCase().includes(q) || j.jobdesc.toLowerCase().includes(q)
     );
   });
 
-  // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="p-6 sm:p-8 max-w-5xl mx-auto">
-      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Jobs</h1>
@@ -207,7 +185,6 @@ export default function JobsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Search */}
           <div className="relative">
             <svg
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
@@ -227,7 +204,6 @@ export default function JobsPage() {
             />
           </div>
 
-          {/* Add button */}
           {canAdd && (
             <button
               onClick={() => setAddOpen(true)}
@@ -240,10 +216,9 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[560px] sm:min-w-[720px] lg:min-w-full w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-36">
@@ -271,7 +246,15 @@ export default function JobsPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)}
+                    colSpan={
+                      canEdit || canDel
+                        ? showStamp
+                          ? 5
+                          : 4
+                        : showStamp
+                          ? 4
+                          : 3
+                    }
                     className="px-4 py-10 text-center text-sm text-gray-400"
                   >
                     Loading…
@@ -280,7 +263,15 @@ export default function JobsPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)}
+                    colSpan={
+                      canEdit || canDel
+                        ? showStamp
+                          ? 5
+                          : 4
+                        : showStamp
+                          ? 4
+                          : 3
+                    }
                     className="px-4 py-10 text-center text-sm text-gray-400"
                   >
                     {search ? "No jobs match your search." : "No jobs found."}
@@ -288,16 +279,17 @@ export default function JobsPage() {
                 </tr>
               ) : (
                 filtered.map((job) => (
+                  // ✅ was key={job.jobCode}
                   <tr
-
-                    key={job.jobCode}
+                    key={job.jobcode}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
+                    {/* ✅ was job.jobCode */}
                     <td className="px-4 py-3 font-mono text-xs text-gray-700 font-medium tracking-wide">
-                      {job.jobCode}
+                      {job.jobcode}
                     </td>
-                    <td className="px-4 py-3 text-gray-800">{job.jobDesc}</td>
-
+                    {/* ✅ was job.jobDesc */}
+                    <td className="px-4 py-3 text-gray-800">{job.jobdesc}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={job.record_status} />
                     </td>
@@ -342,7 +334,6 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Modals */}
       <AddJobModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

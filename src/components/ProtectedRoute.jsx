@@ -6,6 +6,14 @@ export default function ProtectedRoute() {
   const { currentUser, loading: authLoading } = useAuth()
   const { loading: rightsLoading } = useUserRights()
   const location = useLocation()
+  console.log("ProtectedRoute →", {
+    authLoading,
+    rightsLoading,
+    currentUser: currentUser?.email ?? null,
+    user_type: currentUser?.user_type ?? null,
+    path: location.pathname,
+  })
+
 
   if (authLoading || rightsLoading) {
     return (

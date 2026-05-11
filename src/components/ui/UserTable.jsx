@@ -1,23 +1,6 @@
-import UserTypeBadge from '../ui/UserTypeBadge'
-import UserStatusBadge from '../ui/UserStatusBadge'
+import UserTypeBadge from "../ui/UserTypeBadge";
+import UserStatusBadge from "../ui/UserStatusBadge";
 
-/**
- * UserTable.jsx
- *
- * Renders the full user list for the Admin Module.
- *
- * SUPERADMIN rows:
- *   - Rendered with a lock icon and muted styling
- *   - Both action buttons are disabled with `cursor-not-allowed`
- *   - A tooltip ("SUPERADMIN accounts cannot be modified") appears on hover
- *     over the disabled button area
- *
- * Props:
- *   users       {Array}    - user rows from getUsers()
- *   onActivate  {function} - called with (user) when Activate is clicked
- *   onDeactivate {function} - called with (user) when Deactivate is clicked
- *   isActing    {string|null} - userId currently being acted on (shows spinner)
- */
 export default function UserTable({ users, onActivate, onDeactivate, isActing }) {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -26,7 +9,7 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr className="bg-gray-50">
-              {['Username', 'Name', 'Email', 'Role', 'Status', 'Actions'].map((h) => (
+              {["Username", "Email", "Role", "Status", "Actions"].map((h) => (
                 <th
                   key={h}
                   scope="col"
@@ -39,14 +22,17 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
           </thead>
           <tbody className="divide-y divide-gray-100">
             {users.map((user) => {
-              const isSuperadmin = user.user_type === 'SUPERADMIN'
-              const isBeingActedOn = isActing === user.userId
-              const fullName = [user.firstname, user.lastname].filter(Boolean).join(' ') || '—'
+              const isSuperadmin = user.user_type === "SUPERADMIN";
+              const isBeingActedOn = isActing === user.userId;
 
               return (
                 <tr
                   key={user.userId}
-                  className={isSuperadmin ? 'bg-gray-50/60' : 'hover:bg-gray-50/40 transition-colors'}
+                  className={
+                    isSuperadmin
+                      ? "bg-gray-50/60"
+                      : "hover:bg-gray-50/40 transition-colors"
+                  }
                 >
                   {/* Username */}
                   <td className="px-4 py-3">
@@ -67,22 +53,21 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
                       )}
                       <span
                         className={`text-sm font-medium ${
-                          isSuperadmin ? 'text-gray-400' : 'text-gray-900'
+                          isSuperadmin ? "text-gray-400" : "text-gray-900"
                         }`}
                       >
-                        {user.username || '—'}
+                        {user.username || "—"}
                       </span>
                     </div>
                   </td>
 
-                  {/* Name */}
-                  <td className={`px-4 py-3 text-sm ${isSuperadmin ? 'text-gray-400' : 'text-gray-700'}`}>
-                    {fullName}
-                  </td>
-
                   {/* Email */}
-                  <td className={`px-4 py-3 text-sm ${isSuperadmin ? 'text-gray-400' : 'text-gray-700'}`}>
-                    {user.email || '—'}
+                  <td
+                    className={`px-4 py-3 text-sm ${
+                      isSuperadmin ? "text-gray-400" : "text-gray-700"
+                    }`}
+                  >
+                    {user.email || "—"}
                   </td>
 
                   {/* Role */}
@@ -110,7 +95,7 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
                     />
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
@@ -119,30 +104,52 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
       {/* Mobile card list */}
       <ul className="divide-y divide-gray-100 sm:hidden">
         {users.map((user) => {
-          const isSuperadmin = user.user_type === 'SUPERADMIN'
-          const isBeingActedOn = isActing === user.userId
-          const fullName = [user.firstname, user.lastname].filter(Boolean).join(' ') || '—'
+          const isSuperadmin = user.user_type === "SUPERADMIN";
+          const isBeingActedOn = isActing === user.userId;
 
           return (
-            <li key={user.userId} className={`p-4 ${isSuperadmin ? 'bg-gray-50/60' : ''}`}>
+            <li
+              key={user.userId}
+              className={`p-4 ${isSuperadmin ? "bg-gray-50/60" : ""}`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     {isSuperadmin && (
-                      <svg className="h-3.5 w-3.5 flex-shrink-0 text-purple-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                      <svg
+                        className="h-3.5 w-3.5 flex-shrink-0 text-purple-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     )}
-                    <p className={`truncate text-sm font-medium ${isSuperadmin ? 'text-gray-400' : 'text-gray-900'}`}>
-                      {user.username || '—'}
+                    <p
+                      className={`truncate text-sm font-medium ${
+                        isSuperadmin ? "text-gray-400" : "text-gray-900"
+                      }`}
+                    >
+                      {user.username || "—"}
                     </p>
                   </div>
-                  <p className={`mt-0.5 truncate text-xs ${isSuperadmin ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {fullName} · {user.email || '—'}
+                  {/* ✅ removed firstname/lastname — user table only has email */}
+                  <p
+                    className={`mt-0.5 truncate text-xs ${
+                      isSuperadmin ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    {user.email || "—"}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <UserTypeBadge userType={user.user_type} />
-                    {!isSuperadmin && <UserStatusBadge status={user.record_status} />}
+                    {!isSuperadmin && (
+                      <UserStatusBadge status={user.record_status} />
+                    )}
                   </div>
                 </div>
 
@@ -158,29 +165,28 @@ export default function UserTable({ users, onActivate, onDeactivate, isActing })
                 </div>
               </div>
             </li>
-          )
+          );
         })}
       </ul>
     </div>
-  )
+  );
 }
 
-/**
- * SuperadminGuardedActions
- *
- * Renders the Activate / Deactivate buttons for a row.
- * If the row is a SUPERADMIN, renders a locked placeholder instead.
- *
- * The disabled state uses a wrapper <div> with the tooltip so the browser
- * still fires :hover even on a disabled <button> — a disabled button does
- * not receive pointer events in some browsers.
- */
-function SuperadminGuardedActions({ user, isSuperadmin, isBeingActedOn, onActivate, onDeactivate, mobile }) {
-  const isActive = user.record_status === 'ACTIVE'
-  const isDisabled = isBeingActedOn || isSuperadmin
+function SuperadminGuardedActions({
+  user,
+  isSuperadmin,
+  isBeingActedOn,
+  onActivate,
+  onDeactivate,
+  mobile,
+}) {
+  const isActive = user.record_status === "ACTIVE";
+  const isDisabled = isBeingActedOn || isSuperadmin;
 
   return (
-    <div className={`group relative flex gap-2 ${mobile ? 'flex-col' : 'items-center'}`}>
+    <div
+      className={`group relative flex gap-2 ${mobile ? "flex-col" : "items-center"}`}
+    >
       {/* Tooltip for Superadmin */}
       {isSuperadmin && (
         <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden w-52 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-1.5 text-center text-xs text-white shadow-lg group-hover:block">
@@ -231,5 +237,5 @@ function SuperadminGuardedActions({ user, isSuperadmin, isBeingActedOn, onActiva
         </button>
       )}
     </div>
-  )
+  );
 }

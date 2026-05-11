@@ -8,27 +8,30 @@ export default function SoftDeleteConfirmDialog({ open, employee, onClose, onSuc
   if (!open || !employee) return null
 
   async function handleConfirm() {
-    setDeleting(true)
-    setApiError('')
+  setDeleting(true)
+  setApiError('')
 
-    // Soft-delete: flip status to INACTIVE and record the separation date
-    const { error } = await supabase
-      .from('employees')
-      .update({
-        status:  'INACTIVE',
-        sepDate: new Date().toISOString().split('T')[0],
-      })
-      .eq('empno', employee.empno)
+  const today = new Date().toISOString().split('T')[0]
+  const stamp = `DEL by ${employee.empno} on ${today}`
 
-    setDeleting(false)
+  const { error } = await supabase
+    .from('employee')              // ✅ no s
+    .update({
+      record_status: 'INACTIVE',   // ✅ correct column
+      sepdate: today,              // ✅ lowercase
+      stamp: stamp.slice(0, 60),  // ✅ within VARCHAR(60)
+    })
+    .eq('empno', employee.empno)
 
-    if (error) {
-      setApiError(error.message)
-      return
-    }
+  setDeleting(false)
 
-    onSuccess?.(employee.empno)
+  if (error) {
+    setApiError(error.message)
+    return
   }
+
+  onSuccess?.(employee.empno)
+}
 
   function handleClose() {
     if (deleting) return

@@ -75,11 +75,13 @@ function DeleteConfirm({ row, onConfirm, onCancel, deleting }) {
           <p className="text-xs text-gray-500">
             Effective{" "}
             <span className="font-medium text-gray-700">
-              {formatDate(row.effDate)}
+              {/* BUG FIX: was row.effDate — Supabase returns lowercase */}
+              {formatDate(row.effdate)}
             </span>
             {" · "}
             <span className="font-medium text-gray-700">
-              {row.jobDesc ?? row.jobCode}
+              {/* BUG FIX: was row.jobDesc — Supabase returns lowercase jobdesc */}
+              {row.jobdesc ?? row.jobcode}
             </span>
           </p>
           <p className="text-xs text-gray-400 mt-1">
@@ -135,21 +137,21 @@ function EmptyState() {
 
 // ─── main panel ──────────────────────────────────────────────────────────────
 
-export default function JobHistoryPanel({ empNo }) {
+export default function JobHistoryPanel({ empno }) {
   const canAdd = usePermission("JH_ADD");
   const canEdit = usePermission("JH_EDIT");
   const canDel = usePermission("JH_DEL");
   const { currentUser } = useAuth();
-  const showStamp = currentUser?.user_type !== 'USER';
+  const showStamp = currentUser?.user_type !== "USER";
 
   const [rows, setRows] = useState([]);
-  const [job, setJob] = useState({}); // jobCode → jobDesc
-  const [depts, setDepts] = useState({}); // deptCode → deptName
+  const [job, setJob] = useState({});   // jobcode → jobdesc
+  const [depts, setDepts] = useState({}); // deptcode → deptname
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [editTarget, setEditTarget] = useState(null); // JH row being edited
-  const [deleteTarget, setDeleteTarget] = useState(null); // JH row pending delete
+  const [editTarget, setEditTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -165,27 +167,30 @@ export default function JobHistoryPanel({ empNo }) {
         { data: deptData, error: deptErr },
       ] = await Promise.all([
         supabase
-          .from("jobHistory")
+          .from("jobhistory")                    // BUG FIX: was "jobHistory" — Supabase lowercases table names
           .select("*")
-          .eq("empNo", empNo)
-          .eq("record_status", "ACTIVE") // soft-delete filter — this is enough
-          .order("effDate", { ascending: false }),
+          .eq("empno", empno)                    // BUG FIX: was "empNo" — column is lowercase in jobhistory too
+          .eq("record_status", "ACTIVE")
+          .order("effdate", { ascending: false }), // BUG FIX: was "effDate"
         supabase
-          .from("job") // singular — matches HopeDB schema
-          .select("jobCode, jobDesc"),
-        supabase.from("department").select("deptCode, deptName"),
+          .from("job")
+          .select("jobcode, jobdesc"),           // BUG FIX: was "jobCode, jobDesc"
+        supabase
+          .from("department")
+          .select("deptcode, deptname"),         // BUG FIX: was "deptCode, deptName"
       ]);
 
       if (jhErr) throw jhErr;
       if (jobErr) throw jobErr;
       if (deptErr) throw deptErr;
 
+      // BUG FIX: keys from Supabase are lowercase — was j.jobCode / j.jobDesc
       setJob(
-        Object.fromEntries((jobData ?? []).map((j) => [j.jobCode, j.jobDesc])),
+        Object.fromEntries((jobData ?? []).map((j) => [j.jobcode, j.jobdesc])),
       );
       setDepts(
         Object.fromEntries(
-          (deptData ?? []).map((d) => [d.deptCode, d.deptName]),
+          (deptData ?? []).map((d) => [d.deptcode, d.deptname]),
         ),
       );
       setRows(jhData ?? []);
@@ -198,7 +203,7 @@ export default function JobHistoryPanel({ empNo }) {
 
   useEffect(() => {
     fetchAll();
-  }, [empNo]);
+  }, [empno]);
 
   // ── soft-delete ────────────────────────────────────────────────────────────
 
@@ -207,15 +212,14 @@ export default function JobHistoryPanel({ empNo }) {
     setDeleting(true);
     try {
       const { error } = await supabase
-        .from("jobHistory")
+        .from("jobhistory")                         // BUG FIX: was "jobHistory"
         .update({
           record_status: "INACTIVE",
           stamp: `Deleted by ${currentUser.email} on ${new Date().toISOString()}`,
         })
-        .eq("empNo", deleteTarget.empNo)
-        .eq("jobCode", deleteTarget.jobCode)
-        .eq("effDate", deleteTarget.effDate);
-      // TODO: adjust PK column name if different
+        .eq("empno", deleteTarget.empno)            // BUG FIX: was "empNo"
+        .eq("jobcode", deleteTarget.jobcode)        // BUG FIX: was "jobCode"
+        .eq("effdate", deleteTarget.effdate);       // BUG FIX: was "effDate"
 
       if (error) throw error;
       setDeleteTarget(null);
@@ -261,7 +265,7 @@ export default function JobHistoryPanel({ empNo }) {
       {canAdd && showAddForm && (
         <div className="border-b border-gray-100 bg-gray-50/60 px-6 py-5">
           <AddJobHistoryForm
-            empNo={empNo}
+            empno={empno}   
             job={job}
             depts={depts}
             onSuccess={() => {
@@ -305,19 +309,22 @@ export default function JobHistoryPanel({ empNo }) {
             <tbody className="divide-y divide-gray-50">
               {rows.map((row, idx) => (
                 <tr
-                  key={row.id ?? idx}
+                  key={`${row.empno}-${row.jobcode}-${row.effdate}` ?? idx}
                   className="hover:bg-gray-50/60 transition-colors group"
                 >
                   <td className="px-6 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">
-                    {formatDate(row.effDate)}
+                    {/* BUG FIX: was row.effDate */}
+                    {formatDate(row.effdate)}
                   </td>
                   <td className="px-6 py-3.5">
                     <span className="font-medium text-gray-800">
-                      {job[row.jobCode] ?? row.jobCode ?? "—"}
+                      {/* BUG FIX: was job[row.jobCode] — key is lowercase jobcode */}
+                      {job[row.jobcode] ?? row.jobcode ?? "—"}
                     </span>
                   </td>
                   <td className="px-6 py-3.5 text-gray-600">
-                    {depts[row.deptCode] ?? row.deptCode ?? "—"}
+                    {/* BUG FIX: was depts[row.deptCode] — key is lowercase deptcode */}
+                    {depts[row.deptcode] ?? row.deptcode ?? "—"}
                   </td>
                   <td className="px-6 py-3.5 text-gray-600 tabular-nums">
                     {formatSalary(row.salary)}
@@ -368,7 +375,7 @@ export default function JobHistoryPanel({ empNo }) {
       {editTarget && (
         <EditJobHistoryModal
           row={editTarget}
-          job={job}
+          jobs={job}   
           depts={depts}
           onSuccess={() => {
             setEditTarget(null);
@@ -380,7 +387,7 @@ export default function JobHistoryPanel({ empNo }) {
 
       {deleteTarget && (
         <DeleteConfirm
-          row={{ ...deleteTarget, jobDesc: job[deleteTarget.jobCode] }}
+          row={{ ...deleteTarget, jobdesc: job[deleteTarget.jobcode] }} 
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
           deleting={deleting}
