@@ -9,7 +9,7 @@ function FieldError({ msg }) {
   return <p className="mt-1 text-xs text-red-500">{msg}</p>
 }
 
-export default function AddDeptModal({ open, onClose, onSuccess }) {
+export default function AddDeptModal({ open, onClose, onSuccess,currentUser }) {
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
@@ -41,6 +41,7 @@ export default function AddDeptModal({ open, onClose, onSuccess }) {
     const { error } = await supabase.from('department').insert({
       deptcode: form.deptCode.trim().toUpperCase(),
       deptname: form.deptName.trim(),
+      stamp: `ADD|${currentUser?.email ?? "unknown"}|${new Date().toISOString().slice(0, 10)}`,
     })
 
     setSaving(false)

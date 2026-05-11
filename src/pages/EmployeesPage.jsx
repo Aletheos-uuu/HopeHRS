@@ -424,6 +424,7 @@ export default function EmployeesPage() {
             setAddOpen(false);
             fetchEmployees();
           }}
+          currentUser={currentUser}
         />
       )}
       {canEdit && editTarget && (
@@ -435,6 +436,7 @@ export default function EmployeesPage() {
             setEditTarget(null);
             fetchEmployees();
           }}
+          currentUser={currentUser}
         />
       )}
       {canDel && deleteTarget && (

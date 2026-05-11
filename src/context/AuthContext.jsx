@@ -74,11 +74,11 @@ export const AuthProvider = ({ children }) => {
   const checkUserStatus = async (user) => {
   if (!user) return null;
 
-  if (!user.email.endsWith("@neu.edu.ph")) {
-    await supabase.auth.signOut();
-    setAuthError("Access restricted to NEU accounts only.");
-    return null;
-  }
+  // if (!user.email.endsWith("@neu.edu.ph")) {
+  //   await supabase.auth.signOut();
+  //   setAuthError("Access restricted to NEU accounts only.");
+  //   return null;
+  // }
 
   try {
     const { data: profile, error } = await supabase

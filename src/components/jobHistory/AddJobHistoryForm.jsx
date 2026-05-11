@@ -116,7 +116,7 @@ export default function AddJobHistoryForm({
         deptcode: form.deptcode,
         salary: form.salary ? Number(form.salary) : null,
         record_status: "ACTIVE",
-        stamp: `Added by ${currentUser.email} on ${new Date().toISOString()}`,
+        stamp: `ADD|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`,
       };
 
       const { error } = await supabase.from("jobhistory").insert(payload);

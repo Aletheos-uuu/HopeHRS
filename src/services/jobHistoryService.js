@@ -22,7 +22,7 @@ export async function addJobHistory(jobHistoryData, currentUser) {
     .insert([{
       ...jobHistoryData,
       record_status: 'ACTIVE',
-      stamp: `Added by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `ADD|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`
     }])
     .select()
   if (error) throw error
@@ -34,7 +34,7 @@ export async function updateJobHistory(empNo, jobCode, effDate, updates, current
     .from('jobhistory')
     .update({
       ...updates,
-      stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `ADD|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`
     })
     .eq('empno', empNo)
     .eq('jobcode', jobCode)
@@ -49,7 +49,7 @@ export async function softDeleteJobHistory(empNo, jobCode, effDate, currentUser)
     .from('jobhistory')
     .update({
       record_status: 'INACTIVE',
-      stamp: `Deleted by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `ADD|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`
     })
     .eq('empno', empNo)
     .eq('jobcode', jobCode)
@@ -64,7 +64,7 @@ export async function recoverJobHistory(empNo, jobCode, effDate, currentUser) {
     .from('jobhistory')
     .update({
       record_status: 'ACTIVE',
-      stamp: `Recovered by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `ADD|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`
     })
     .eq('empno', empNo)
     .eq('jobcode', jobCode)

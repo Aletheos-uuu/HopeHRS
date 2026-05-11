@@ -338,6 +338,7 @@ export default function JobsPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchJobs}
+        currentUser={currentUser}
       />
       <EditJobModal
         open={!!editJob}
@@ -347,6 +348,7 @@ export default function JobsPage() {
           fetchJobs();
         }}
         job={editJob}
+        currentUser={currentUser}
       />
       {deleteJob && (
         <DeleteConfirm
