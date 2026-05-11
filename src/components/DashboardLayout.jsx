@@ -39,7 +39,7 @@ export default function DashboardLayout() {
             PeopleHR
           </div>
         </div>
-        <div className="container mx-auto p-8">
+        <div className="min-h-full">
           <Outlet />
         </div>
       </main>
