@@ -71,43 +71,45 @@ export const AuthProvider = ({ children }) => {
     setEmployees(merged);
   };
   const checkUserStatus = async (user) => {
-    if (!user) return null;
+  if (!user) return null;
 
-    // Block non-NEU emails
-    if (!user.email.endsWith("@neu.edu.ph")) {
+  if (!user.email.endsWith("@neu.edu.ph")) {
+    await supabase.auth.signOut();
+    setAuthError("Access restricted to NEU accounts only.");
+    return null;
+  }
+
+  try {
+    const { data: profile, error } = await supabase
+      .from("user")
+      .select("record_status, user_type, username")
+      .eq("userId", user.id)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        console.warn("Profile not found for user:", user.id);
+        return user;
+      }
+      throw error;
+    }
+
+    if (profile.record_status !== "ACTIVE") {
       await supabase.auth.signOut();
-      setAuthError("Access restricted to NEU accounts only.");
+      setAuthError("Account Inactive. Please contact support.");
       return null;
     }
-    try {
-      const { data: profile, error } = await supabase
-        .from("user")
-        .select("record_status, user_type")
-        .eq("userId", user.id)
-        .single();
 
-      if (error) {
-        if (error.code === "PGRST116") {
-          console.warn("Profile not found for user:", user.id);
-          return user;
-        }
-        throw error;
-      }
+    setUserRole(profile.user_type);
+    setAuthError(null);
 
-      if (profile.record_status !== "ACTIVE") {
-        await supabase.auth.signOut();
-        setAuthError("Account Inactive. Please contact support.");
-        return null;
-      }
-
-      setUserRole(profile.user_type);
-      setAuthError(null);
-      return user;
-    } catch (err) {
-      console.error("Login Guard Error:", err);
-      return user;
-    }
-  };
+    // ✅ Merge profile fields into the user object so currentUser.user_type works
+    return { ...user, user_type: profile.user_type, username: profile.username };
+  } catch (err) {
+    console.error("Login Guard Error:", err);
+    return user;
+  }
+};
   useEffect(() => {
     // One-time initial session check — always calls setLoading(false)
     supabase.auth.getSession().then(async ({ data: { session } }) => {

@@ -6,6 +6,7 @@ import AuthCallback from './pages/AuthCallback'
 import EmployeesPage from './pages/EmployeesPage'
 import JobHistoryPage from './pages/JobHistoryPage'  // ✅ correct file'
 import JobsPage from './pages/JobsPage'
+import EmployeeDetailPage from './pages/EmployeeDetailPage'
 import DepartmentsPage from './pages/DepartmentsPage'
 import UserManagementPage from './pages/UserManagementPage'
 import DeletedItemsPage from './pages/DeletedItemsPage'
@@ -21,6 +22,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/employees/:empno" element={<EmployeeDetailPage />} />
           <Route path="jobhistory" element={<JobHistoryPage />} />  
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
