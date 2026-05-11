@@ -42,7 +42,14 @@ function TrashIcon() {
 
 function ChevronRightIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75}>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 4l4 4-4 4" />
     </svg>
   );
@@ -53,9 +60,11 @@ function ChevronRightIcon() {
 function StatusBadge({ status }) {
   const isActive = status === "ACTIVE";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-      isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"
-    }`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+        isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"
+      }`}
+    >
       {status}
     </span>
   );
@@ -81,20 +90,20 @@ export default function EmployeesPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
 
-  const canAdd  = usePermission("EMP_ADD");
+  const canAdd = usePermission("EMP_ADD");
   const canEdit = usePermission("EMP_EDIT");
-  const canDel  = usePermission("EMP_DEL");
+  const canDel = usePermission("EMP_DEL");
 
-  const isUser     = currentUser?.user_type === "USER";
-  const showStamp  = !isUser;
+  const isUser = currentUser?.user_type === "USER";
+  const showStamp = !isUser;
   const canSeeInactive = !isUser;
 
   // ── local data fetch ───────────────────────────────────────────────────────
   // Fetch from employee_current_job view so jobdesc + deptname are available.
   // For USER accounts we filter ACTIVE only; ADMIN/SUPERADMIN get all rows.
   const [employees, setEmployees] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   async function fetchEmployees() {
     setLoading(true);
@@ -118,13 +127,15 @@ export default function EmployeesPage() {
     }
   }
 
-  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   // ── ui state ───────────────────────────────────────────────────────────────
-  const [search, setSearch]           = useState("");
+  const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
-  const [addOpen, setAddOpen]         = useState(false);
-  const [editTarget, setEditTarget]   = useState(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   // ── filtered list ──────────────────────────────────────────────────────────
@@ -148,8 +159,12 @@ export default function EmployeesPage() {
   }, [employees, search, showInactive]);
 
   // ── stats ──────────────────────────────────────────────────────────────────
-  const totalActive   = employees.filter((e) => e.record_status === "ACTIVE").length;
-  const totalInactive = employees.filter((e) => e.record_status === "INACTIVE").length;
+  const totalActive = employees.filter(
+    (e) => e.record_status === "ACTIVE",
+  ).length;
+  const totalInactive = employees.filter(
+    (e) => e.record_status === "INACTIVE",
+  ).length;
 
   const colCount = 8 + (showStamp ? 1 : 0) + (canEdit || canDel ? 1 : 0);
 
@@ -157,11 +172,12 @@ export default function EmployeesPage() {
   return (
     <div className="min-h-full bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
         {/* page header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Employees</h1>
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">
+              Employees
+            </h1>
             <p className="text-sm text-gray-400 mt-0.5">
               View, add, edit, and soft-delete employee records.
             </p>
@@ -203,19 +219,26 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        {/* stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Total",    value: employees.length },
-            { label: "Active",   value: totalActive },
-            { label: "Inactive", value: totalInactive },
-            { label: "Showing",  value: filtered.length },
-          ].map(({ label, value }) => (
-            <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-              <p className="text-2xl font-semibold text-gray-900">{value}</p>
-            </div>
-          ))}
+        {/* stat cards — show 4 fixed-width columns and allow horizontal scroll on small screens */}
+        <div className="overflow-x-auto">
+          <div className="flex gap-3 py-1 w-max">
+            {[
+              { label: "Total", value: employees.length },
+              { label: "Active", value: totalActive },
+              { label: "Inactive", value: totalInactive },
+              { label: "Showing", value: filtered.length },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="flex-shrink-0 min-w-[180px] bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3"
+              >
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                  {label}
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">{value}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* table */}
@@ -227,7 +250,9 @@ export default function EmployeesPage() {
           ) : filtered.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <p className="text-sm text-gray-400">
-                {search ? "No employees match your search." : "No employees found."}
+                {search
+                  ? "No employees match your search."
+                  : "No employees found."}
               </p>
             </div>
           ) : (
@@ -236,8 +261,14 @@ export default function EmployeesPage() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     {[
-                      "Emp No", "Last Name", "First Name", "Gender",
-                      "Hire Date", "Sep Date", "Current Job", "Status",
+                      "Emp No",
+                      "Last Name",
+                      "First Name",
+                      "Gender",
+                      "Hire Date",
+                      "Sep Date",
+                      "Current Job",
+                      "Status",
                       ...(showStamp ? ["Stamp"] : []),
                       ...(canEdit || canDel ? [""] : []),
                     ].map((h) => (
@@ -280,7 +311,11 @@ export default function EmployeesPage() {
 
                         {/* gender */}
                         <td className="px-4 py-3.5 text-gray-500">
-                          {emp.gender === "M" ? "Male" : emp.gender === "F" ? "Female" : "—"}
+                          {emp.gender === "M"
+                            ? "Male"
+                            : emp.gender === "F"
+                              ? "Female"
+                              : "—"}
                         </td>
 
                         {/* hire date */}
@@ -291,7 +326,9 @@ export default function EmployeesPage() {
                         {/* sep date */}
                         <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
                           {emp.sepdate ? (
-                            <span className="text-orange-600">{formatDate(emp.sepdate)}</span>
+                            <span className="text-orange-600">
+                              {formatDate(emp.sepdate)}
+                            </span>
                           ) : (
                             <span className="text-gray-300">—</span>
                           )}
@@ -301,7 +338,9 @@ export default function EmployeesPage() {
                         <td className="px-4 py-3.5">
                           {emp.jobdesc ? (
                             <span>
-                              <span className="text-gray-800 font-medium">{emp.jobdesc}</span>
+                              <span className="text-gray-800 font-medium">
+                                {emp.jobdesc}
+                              </span>
                               {emp.deptname && (
                                 <span className="text-gray-400 text-xs ml-1.5">
                                   — {emp.deptname}
@@ -381,7 +420,10 @@ export default function EmployeesPage() {
         <AddEmployeeModal
           open={addOpen}
           onClose={() => setAddOpen(false)}
-          onSuccess={() => { setAddOpen(false); fetchEmployees(); }}
+          onSuccess={() => {
+            setAddOpen(false);
+            fetchEmployees();
+          }}
         />
       )}
       {canEdit && editTarget && (
@@ -389,7 +431,10 @@ export default function EmployeesPage() {
           open={!!editTarget}
           employee={editTarget}
           onClose={() => setEditTarget(null)}
-          onSuccess={() => { setEditTarget(null); fetchEmployees(); }}
+          onSuccess={() => {
+            setEditTarget(null);
+            fetchEmployees();
+          }}
         />
       )}
       {canDel && deleteTarget && (
@@ -397,7 +442,10 @@ export default function EmployeesPage() {
           open={!!deleteTarget}
           employee={deleteTarget}
           onClose={() => setDeleteTarget(null)}
-          onSuccess={() => { setDeleteTarget(null); fetchEmployees(); }}
+          onSuccess={() => {
+            setDeleteTarget(null);
+            fetchEmployees();
+          }}
         />
       )}
     </div>

@@ -22,7 +22,11 @@ function formatSalary(amount) {
 
 function makeStamp(action, email) {
   const date = new Date().toISOString().slice(0, 10); // "2026-05-12" not full ISO
-  const stamp = `${action} by ${email} on ${new Date().toISOString().slice(0, 10)}`.slice(0, 60);
+  const stamp =
+    `${action} by ${email} on ${new Date().toISOString().slice(0, 10)}`.slice(
+      0,
+      60,
+    );
   return stamp.slice(0, 60); // hard cap at VARCHAR(60)
 }
 
@@ -30,8 +34,18 @@ function makeStamp(action, email) {
 
 function SearchIcon() {
   return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.75}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
+      />
     </svg>
   );
 }
@@ -54,7 +68,13 @@ function TrashIcon() {
 
 function ChevronIcon({ dir = "down" }) {
   return (
-    <svg className={`w-3.5 h-3.5 transition-transform ${dir === "up" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
+    <svg
+      className={`w-3.5 h-3.5 transition-transform ${dir === "up" ? "rotate-180" : ""}`}
+      fill="none"
+      viewBox="0 0 16 16"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
     </svg>
   );
@@ -98,18 +118,29 @@ function EditModal({ row, jobs, depts, onSuccess, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.4)" }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Edit Job History Entry</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            Edit Job History Entry
+          </h3>
           <p className="text-xs text-gray-400 mt-0.5">
-            {row.empno} · {jobs[row.jobcode] ?? row.jobcode} · {formatDate(row.effdate)}
+            {row.empno} · {jobs[row.jobcode] ?? row.jobcode} ·{" "}
+            {formatDate(row.effdate)}
           </p>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Salary</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Salary
+            </label>
             <input
               type="number"
               min="0"
@@ -119,14 +150,18 @@ function EditModal({ row, jobs, depts, onSuccess, onClose }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Department</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Department
+            </label>
             <select
               value={deptcode}
               onChange={(e) => setDeptcode(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
             >
               {Object.entries(depts).map(([code, name]) => (
-                <option key={code} value={code}>{name} ({code})</option>
+                <option key={code} value={code}>
+                  {name} ({code})
+                </option>
               ))}
             </select>
           </div>
@@ -135,10 +170,18 @@ function EditModal({ row, jobs, depts, onSuccess, onClose }) {
         {err && <p className="text-xs text-red-600">{err}</p>}
 
         <div className="flex gap-3">
-          <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving} className="flex-1 px-4 py-2 text-sm rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 px-4 py-2 text-sm rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60"
+          >
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
@@ -151,29 +194,61 @@ function EditModal({ row, jobs, depts, onSuccess, onClose }) {
 
 function DeleteConfirm({ row, jobs, onConfirm, onCancel, deleting }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.4)" }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          <svg
+            className="w-5 h-5 text-red-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
           </svg>
         </div>
         <div className="text-center space-y-1">
-          <p className="text-sm font-semibold text-gray-900">Remove this job history entry?</p>
+          <p className="text-sm font-semibold text-gray-900">
+            Remove this job history entry?
+          </p>
           <p className="text-xs text-gray-500">
             <span className="font-medium text-gray-700">{row.empno}</span>
             {" · "}
-            <span className="font-medium text-gray-700">{jobs[row.jobcode] ?? row.jobcode}</span>
+            <span className="font-medium text-gray-700">
+              {jobs[row.jobcode] ?? row.jobcode}
+            </span>
             {" · "}
-            <span className="font-medium text-gray-700">{formatDate(row.effdate)}</span>
+            <span className="font-medium text-gray-700">
+              {formatDate(row.effdate)}
+            </span>
           </p>
-          <p className="text-xs text-gray-400">This will be soft-deleted and recoverable by an admin.</p>
+          <p className="text-xs text-gray-400">
+            This will be soft-deleted and recoverable by an admin.
+          </p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onCancel} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
             Cancel
           </button>
-          <button onClick={onConfirm} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60">
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
+          >
             {deleting ? "Removing…" : "Remove"}
           </button>
         </div>
@@ -250,9 +325,18 @@ export default function JobHistoryPage() {
           .select("*")
           .eq("record_status", "ACTIVE")
           .order("effdate", { ascending: false }),
-        supabase.from("job").select("jobcode, jobdesc").eq("record_status", "ACTIVE"),
-        supabase.from("department").select("deptcode, deptname").eq("record_status", "ACTIVE"),
-        supabase.from("employee").select("empno, firstname, lastname").eq("record_status", "ACTIVE"),
+        supabase
+          .from("job")
+          .select("jobcode, jobdesc")
+          .eq("record_status", "ACTIVE"),
+        supabase
+          .from("department")
+          .select("deptcode, deptname")
+          .eq("record_status", "ACTIVE"),
+        supabase
+          .from("employee")
+          .select("empno, firstname, lastname")
+          .eq("record_status", "ACTIVE"),
       ]);
 
       if (jhErr) throw jhErr;
@@ -260,12 +344,18 @@ export default function JobHistoryPage() {
       if (deptErr) throw deptErr;
       if (empErr) throw empErr;
 
-      setJobs(Object.fromEntries((jobData ?? []).map((j) => [j.jobcode, j.jobdesc])));
-      setDepts(Object.fromEntries((deptData ?? []).map((d) => [d.deptcode, d.deptname])));
+      setJobs(
+        Object.fromEntries((jobData ?? []).map((j) => [j.jobcode, j.jobdesc])),
+      );
+      setDepts(
+        Object.fromEntries(
+          (deptData ?? []).map((d) => [d.deptcode, d.deptname]),
+        ),
+      );
       setEmployees(
         Object.fromEntries(
-          (empData ?? []).map((e) => [e.empno, `${e.firstname} ${e.lastname}`])
-        )
+          (empData ?? []).map((e) => [e.empno, `${e.firstname} ${e.lastname}`]),
+        ),
       );
       setRows(jhData ?? []);
     } catch (err) {
@@ -275,7 +365,9 @@ export default function JobHistoryPage() {
     }
   }
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
   // ── soft-delete ────────────────────────────────────────────────────────────
 
@@ -287,7 +379,11 @@ export default function JobHistoryPage() {
         .from("jobhistory")
         .update({
           record_status: "INACTIVE",
-          stamp: `DEL by ${currentUser.email} on ${new Date().toISOString().slice(0, 10)}`.slice(0, 60),
+          stamp:
+            `DEL by ${currentUser.email} on ${new Date().toISOString().slice(0, 10)}`.slice(
+              0,
+              60,
+            ),
         })
         .eq("empno", deleteTarget.empno)
         .eq("jobcode", deleteTarget.jobcode)
@@ -347,7 +443,17 @@ export default function JobHistoryPage() {
         if (aVal > bVal) return sortAsc ? 1 : -1;
         return 0;
       });
-  }, [rows, search, filterJob, filterDept, sortField, sortAsc, employees, jobs, depts]);
+  }, [
+    rows,
+    search,
+    filterJob,
+    filterDept,
+    sortField,
+    sortAsc,
+    employees,
+    jobs,
+    depts,
+  ]);
 
   // ── column header ──────────────────────────────────────────────────────────
 
@@ -375,13 +481,15 @@ export default function JobHistoryPage() {
   return (
     <div className="min-h-full bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
         {/* page header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Job History</h1>
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">
+              Job History
+            </h1>
             <p className="text-sm text-gray-400 mt-0.5">
-              Track each employee's progression through jobs, departments, salaries, and effective dates.
+              Track each employee's progression through jobs, departments,
+              salaries, and effective dates.
             </p>
           </div>
           {!loading && (
@@ -416,7 +524,9 @@ export default function JobHistoryPage() {
             >
               <option value="ALL">All Jobs</option>
               {Object.entries(jobs).map(([code, desc]) => (
-                <option key={code} value={code}>{desc} ({code})</option>
+                <option key={code} value={code}>
+                  {desc} ({code})
+                </option>
               ))}
             </select>
 
@@ -428,14 +538,20 @@ export default function JobHistoryPage() {
             >
               <option value="ALL">All Departments</option>
               {Object.entries(depts).map(([code, name]) => (
-                <option key={code} value={code}>{name} ({code})</option>
+                <option key={code} value={code}>
+                  {name} ({code})
+                </option>
               ))}
             </select>
 
             {/* clear */}
             {(search || filterJob !== "ALL" || filterDept !== "ALL") && (
               <button
-                onClick={() => { setSearch(""); setFilterJob("ALL"); setFilterDept("ALL"); }}
+                onClick={() => {
+                  setSearch("");
+                  setFilterJob("ALL");
+                  setFilterDept("ALL");
+                }}
                 className="px-3 py-2 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Clear filters
@@ -452,11 +568,13 @@ export default function JobHistoryPage() {
             <div className="px-6 py-8 text-sm text-red-600">{error}</div>
           ) : filtered.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-sm text-gray-400">No job history records match your filters.</p>
+              <p className="text-sm text-gray-400">
+                No job history records match your filters.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="min-w-[560px] sm:min-w-[720px] lg:min-w-full w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
                     <SortHeader field="empno">Employee</SortHeader>
@@ -489,7 +607,9 @@ export default function JobHistoryPage() {
                           <p className="font-medium text-gray-900 group-hover/emp:text-indigo-600 transition-colors">
                             {employees[row.empno] ?? row.empno}
                           </p>
-                          <p className="text-xs text-gray-400 font-mono">{row.empno}</p>
+                          <p className="text-xs text-gray-400 font-mono">
+                            {row.empno}
+                          </p>
                         </button>
                       </td>
 
@@ -571,7 +691,10 @@ export default function JobHistoryPage() {
           row={editTarget}
           jobs={jobs}
           depts={depts}
-          onSuccess={() => { setEditTarget(null); fetchAll(); }}
+          onSuccess={() => {
+            setEditTarget(null);
+            fetchAll();
+          }}
           onClose={() => setEditTarget(null)}
         />
       )}

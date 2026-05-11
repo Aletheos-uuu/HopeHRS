@@ -57,11 +57,27 @@ function TrashIcon() {
 
 function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.35)" }}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.35)" }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          <svg
+            className="w-5 h-5 text-red-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
           </svg>
         </div>
         <div className="text-center space-y-1">
@@ -70,11 +86,23 @@ function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
           <p className="text-xs text-gray-500">
             <span className="font-medium text-gray-700">{job?.jobdesc}</span>
           </p>
-          <p className="text-xs text-gray-400 mt-1">This will be soft-deleted and recoverable by an admin.</p>
+          <p className="text-xs text-gray-400 mt-1">
+            This will be soft-deleted and recoverable by an admin.
+          </p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onCancel} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">Cancel</button>
-          <button onClick={onConfirm} disabled={deleting} className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60">
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
+          >
             {deleting ? "Removing…" : "Remove"}
           </button>
         </div>
@@ -83,14 +111,13 @@ function DeleteConfirm({ job, onConfirm, onCancel, deleting }) {
   );
 }
 
-
 export default function JobsPage() {
   const { userRole, currentUser } = useAuth();
   const canAdd = usePermission("JOB_ADD");
   const canEdit = usePermission("JOB_EDIT");
   const canDel = usePermission("JOB_DEL");
 
-  const showStamp = currentUser?.user_type !== 'USER';
+  const showStamp = currentUser?.user_type !== "USER";
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,39 +127,38 @@ export default function JobsPage() {
   const [deleteJob, setDeleteJob] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-
   async function fetchJobs() {
-  setLoading(true);
-  let query = supabase
-    .from("job")
-    .select("jobcode, jobdesc, record_status, stamp")
-    .order("jobcode", { ascending: true });
+    setLoading(true);
+    let query = supabase
+      .from("job")
+      .select("jobcode, jobdesc, record_status, stamp")
+      .order("jobcode", { ascending: true });
 
-  if (currentUser?.user_type === "USER") {
-    query = query.eq("record_status", "ACTIVE");
+    if (currentUser?.user_type === "USER") {
+      query = query.eq("record_status", "ACTIVE");
+    }
+
+    const { data, error } = await query;
+    if (!error) setJobs(data ?? []);
+    setLoading(false);
   }
 
-  const { data, error } = await query;
-  if (!error) setJobs(data ?? []);
-  setLoading(false);
-}
-
   async function handleDelete() {
-  if (!deleteJob) return;
-  setDeleting(true);
-  const today = new Date().toISOString().slice(0, 10);
-  const { error } = await supabase
-    .from("job")
-    .update({
-      record_status: "INACTIVE",
-      stamp: `DEL by ${currentUser.email} on ${today}`.slice(0, 60), // ✅ add stamp
-    })
-    .eq("jobcode", deleteJob.jobcode);
-  if (error) console.error("Delete failed:", error);
-  setDeleting(false);
-  setDeleteJob(null);
-  if (!error) fetchJobs();
-}
+    if (!deleteJob) return;
+    setDeleting(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase
+      .from("job")
+      .update({
+        record_status: "INACTIVE",
+        stamp: `DEL by ${currentUser.email} on ${today}`.slice(0, 60), // ✅ add stamp
+      })
+      .eq("jobcode", deleteJob.jobcode);
+    if (error) console.error("Delete failed:", error);
+    setDeleting(false);
+    setDeleteJob(null);
+    if (!error) fetchJobs();
+  }
 
   useEffect(() => {
     fetchJobs();
@@ -142,8 +168,7 @@ export default function JobsPage() {
     const q = search.toLowerCase();
     // ✅ was j.jobCode + j.jobDesc
     return (
-      j.jobcode.toLowerCase().includes(q) ||
-      j.jobdesc.toLowerCase().includes(q)
+      j.jobcode.toLowerCase().includes(q) || j.jobdesc.toLowerCase().includes(q)
     );
   });
 
@@ -153,13 +178,21 @@ export default function JobsPage() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Jobs</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {loading ? "Loading…" : `${filtered.length} record${filtered.length !== 1 ? "s" : ""}`}
+            {loading
+              ? "Loading…"
+              : `${filtered.length} record${filtered.length !== 1 ? "s" : ""}`}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="relative">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <svg
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+            >
               <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z" />
             </svg>
             <input
@@ -185,42 +218,87 @@ export default function JobsPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[560px] sm:min-w-[720px] lg:min-w-full w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-36">Job Code</th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Description</th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Status</th>
-                {showStamp && <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-32">Stamp</th>}
-                {(canEdit || canDel) && <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Actions</th>}
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-36">
+                  Job Code
+                </th>
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
+                  Description
+                </th>
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
+                  Status
+                </th>
+                {showStamp && (
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-32">
+                    Stamp
+                  </th>
+                )}
+                {(canEdit || canDel) && (
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td
+                    colSpan={
+                      canEdit || canDel
+                        ? showStamp
+                          ? 5
+                          : 4
+                        : showStamp
+                          ? 4
+                          : 3
+                    }
+                    className="px-4 py-10 text-center text-sm text-gray-400"
+                  >
                     Loading…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={(canEdit || canDel) ? (showStamp ? 5 : 4) : (showStamp ? 4 : 3)} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td
+                    colSpan={
+                      canEdit || canDel
+                        ? showStamp
+                          ? 5
+                          : 4
+                        : showStamp
+                          ? 4
+                          : 3
+                    }
+                    className="px-4 py-10 text-center text-sm text-gray-400"
+                  >
                     {search ? "No jobs match your search." : "No jobs found."}
                   </td>
                 </tr>
               ) : (
                 filtered.map((job) => (
                   // ✅ was key={job.jobCode}
-                  <tr key={job.jobcode} className="hover:bg-gray-50/60 transition-colors">
+                  <tr
+                    key={job.jobcode}
+                    className="hover:bg-gray-50/60 transition-colors"
+                  >
                     {/* ✅ was job.jobCode */}
-                    <td className="px-4 py-3 font-mono text-xs text-gray-700 font-medium tracking-wide">{job.jobcode}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-700 font-medium tracking-wide">
+                      {job.jobcode}
+                    </td>
                     {/* ✅ was job.jobDesc */}
                     <td className="px-4 py-3 text-gray-800">{job.jobdesc}</td>
-                    <td className="px-4 py-3"><StatusBadge status={job.record_status} /></td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={job.record_status} />
+                    </td>
                     {showStamp && (
                       <td className="px-4 py-3 text-gray-500 text-xs">
                         {job.stamp ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">{job.stamp}</span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">
+                            {job.stamp}
+                          </span>
                         ) : (
                           <span className="text-gray-300">—</span>
                         )}
@@ -229,8 +307,22 @@ export default function JobsPage() {
                     {(canEdit || canDel) && (
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">
-                          {canEdit && <IconButton onClick={() => setEditJob(job)} title="Edit job"><EditIcon /></IconButton>}
-                          {canDel && <IconButton onClick={() => setDeleteJob(job)} title="Delete job"><TrashIcon /></IconButton>}
+                          {canEdit && (
+                            <IconButton
+                              onClick={() => setEditJob(job)}
+                              title="Edit job"
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          )}
+                          {canDel && (
+                            <IconButton
+                              onClick={() => setDeleteJob(job)}
+                              title="Delete job"
+                            >
+                              <TrashIcon />
+                            </IconButton>
+                          )}
                         </div>
                       </td>
                     )}
@@ -242,14 +334,28 @@ export default function JobsPage() {
         </div>
       </div>
 
-      <AddJobModal open={addOpen} onClose={() => setAddOpen(false)} onSuccess={fetchJobs} />
+      <AddJobModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={fetchJobs}
+      />
       <EditJobModal
         open={!!editJob}
         onClose={() => setEditJob(null)}
-        onSuccess={() => { setEditJob(null); fetchJobs(); }}
+        onSuccess={() => {
+          setEditJob(null);
+          fetchJobs();
+        }}
         job={editJob}
       />
-      {deleteJob && <DeleteConfirm job={deleteJob} onConfirm={handleDelete} onCancel={() => setDeleteJob(null)} deleting={deleting} />}
+      {deleteJob && (
+        <DeleteConfirm
+          job={deleteJob}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteJob(null)}
+          deleting={deleting}
+        />
+      )}
     </div>
   );
 }

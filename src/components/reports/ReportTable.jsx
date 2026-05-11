@@ -13,12 +13,16 @@
  *   data     {Array}  - array of row objects
  *   emptyMsg {string} - message shown when data is empty
  */
-export default function ReportTable({ columns, data, emptyMsg = 'No records found.' }) {
+export default function ReportTable({
+  columns,
+  data,
+  emptyMsg = "No records found.",
+}) {
   const alignClass = {
-    left: 'text-left',
-    right: 'text-right',
-    center: 'text-center',
-  }
+    left: "text-left",
+    right: "text-right",
+    center: "text-center",
+  };
 
   if (data.length === 0) {
     return (
@@ -39,14 +43,14 @@ export default function ReportTable({ columns, data, emptyMsg = 'No records foun
         </svg>
         <p className="text-sm text-gray-400">{emptyMsg}</p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       {/* Desktop */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-[560px] sm:min-w-[720px] lg:min-w-full w-full divide-y divide-gray-200">
           <thead>
             <tr className="bg-gray-50">
               {columns.map((col) => (
@@ -54,7 +58,7 @@ export default function ReportTable({ columns, data, emptyMsg = 'No records foun
                   key={col.key}
                   scope="col"
                   className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 ${
-                    alignClass[col.align ?? 'left']
+                    alignClass[col.align ?? "left"]
                   }`}
                 >
                   {col.label}
@@ -69,12 +73,12 @@ export default function ReportTable({ columns, data, emptyMsg = 'No records foun
                   <td
                     key={col.key}
                     className={`px-4 py-3 text-sm text-gray-700 ${
-                      alignClass[col.align ?? 'left']
+                      alignClass[col.align ?? "left"]
                     }`}
                   >
                     {col.render
                       ? col.render(row[col.key], row)
-                      : (row[col.key] ?? '—')}
+                      : (row[col.key] ?? "—")}
                   </td>
                 ))}
               </tr>
@@ -83,5 +87,5 @@ export default function ReportTable({ columns, data, emptyMsg = 'No records foun
         </table>
       </div>
     </div>
-  )
+  );
 }
