@@ -177,7 +177,7 @@ export default function DepartmentsPage() {
   const colCount = 3 + (showStamp ? 1 : 0) + (canEdit || canDel ? 1 : 0);
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Departments</h1>
@@ -188,8 +188,8 @@ export default function DepartmentsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="relative flex-1 sm:flex-initial">
             <svg
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
               width="14"
@@ -204,14 +204,14 @@ export default function DepartmentsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search departments…"
-              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 w-52"
+              className="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 w-full sm:w-52"
             />
           </div>
 
           {canAdd && (
             <button
               onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 whitespace-nowrap"
             >
               <PlusIcon />
               Add Department
@@ -222,20 +222,20 @@ export default function DepartmentsPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-[560px] sm:min-w-[720px] lg:min-w-full w-full text-sm">
+          <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-36">
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28 sm:w-36">
                   Dept Code
                 </th>
                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
                   Department Name
                 </th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-28">
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-24 sm:w-28">
                   Status
                 </th>
                 {showStamp && (
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-32">
+                  <th className="hidden lg:table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-32">
                     Stamp
                   </th>
                 )}
@@ -278,7 +278,7 @@ export default function DepartmentsPage() {
                       <StatusBadge status={dept.record_status} />
                     </td>
                     {showStamp && (
-                      <td className="px-4 py-3 text-gray-500 text-xs">
+                      <td className="hidden lg:table-cell px-4 py-3 text-gray-500 text-xs">
                         {dept.stamp ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">
                             {dept.stamp}

@@ -520,7 +520,7 @@ export default function JobHistoryPage() {
             <select
               value={filterJob}
               onChange={(e) => setFilterJob(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-gray-700"
+              className="w-full sm:w-auto px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-gray-700"
             >
               <option value="ALL">All Jobs</option>
               {Object.entries(jobs).map(([code, desc]) => (
@@ -534,7 +534,7 @@ export default function JobHistoryPage() {
             <select
               value={filterDept}
               onChange={(e) => setFilterDept(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-gray-700"
+              className="w-full sm:w-auto px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-gray-700"
             >
               <option value="ALL">All Departments</option>
               {Object.entries(depts).map(([code, name]) => (
@@ -574,18 +574,38 @@ export default function JobHistoryPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-[560px] sm:min-w-[720px] lg:min-w-full w-full text-sm">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
                     <SortHeader field="empno">Employee</SortHeader>
                     <SortHeader field="jobcode">Job</SortHeader>
                     <SortHeader field="effdate">Eff. Date</SortHeader>
-                    <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                    <th className="hidden md:table-cell px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                       Department
                     </th>
-                    <SortHeader field="salary">Salary</SortHeader>
+                    <th
+                      className="hidden sm:table-cell px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 cursor-pointer select-none hover:text-gray-600 transition-colors"
+                      onClick={() => handleSort("salary")}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Salary
+                        <span
+                          className={
+                            sortField === "salary"
+                              ? "text-indigo-500"
+                              : "text-gray-300"
+                          }
+                        >
+                          <ChevronIcon
+                            dir={
+                              sortField === "salary" && !sortAsc ? "up" : "down"
+                            }
+                          />
+                        </span>
+                      </span>
+                    </th>
                     {showStamp && (
-                      <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                      <th className="hidden xl:table-cell px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                         Stamp
                       </th>
                     )}
@@ -629,18 +649,18 @@ export default function JobHistoryPage() {
                       </td>
 
                       {/* department */}
-                      <td className="px-5 py-3.5 text-gray-600">
+                      <td className="hidden md:table-cell px-5 py-3.5 text-gray-600">
                         {depts[row.deptcode] ?? row.deptcode ?? "—"}
                       </td>
 
                       {/* salary */}
-                      <td className="px-5 py-3.5 text-gray-700 tabular-nums font-medium">
+                      <td className="hidden sm:table-cell px-5 py-3.5 text-gray-700 tabular-nums font-medium">
                         {formatSalary(row.salary)}
                       </td>
 
                       {/* stamp */}
                       {showStamp && (
-                        <td className="px-5 py-3.5 max-w-[180px]">
+                        <td className="hidden xl:table-cell px-5 py-3.5 max-w-[180px]">
                           {row.stamp ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-50 text-violet-700 truncate max-w-full">
                               {row.stamp}
@@ -654,7 +674,7 @@ export default function JobHistoryPage() {
                       {/* actions */}
                       {hasActions && (
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             {canEdit && (
                               <button
                                 onClick={() => setEditTarget(row)}

@@ -131,7 +131,7 @@ export default function AddEmployeeModal({ open, onClose, onSuccess, currentUser
             />
           </FormField>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Last name" error={errors.lastname}>
               <input
                 className={inputCls}
@@ -150,7 +150,7 @@ export default function AddEmployeeModal({ open, onClose, onSuccess, currentUser
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Gender" error={errors.gender}>
               <select
                 className={inputCls}

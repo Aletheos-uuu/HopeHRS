@@ -121,7 +121,7 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess, 
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Last name" error={errors.lastname}>
               <input
                 className={inputCls}
@@ -140,7 +140,7 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess, 
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Gender" error={errors.gender}>
               <select
                 className={inputCls}
@@ -167,7 +167,7 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess, 
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Hire date" error={errors.hiredate}>
               <input
                 type="date"

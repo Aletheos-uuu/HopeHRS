@@ -173,7 +173,7 @@ export default function EmployeesPage() {
     <div className="min-h-full bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* page header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight">
               Employees
@@ -183,14 +183,14 @@ export default function EmployeesPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 sm:flex-wrap">
             {/* search */}
             <input
               type="text"
               placeholder="Search by name, emp no, job…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-60 focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white"
+              className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white"
             />
 
             {/* show inactive toggle — ADMIN/SUPERADMIN only */}
@@ -261,22 +261,26 @@ export default function EmployeesPage() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     {[
-                      "Emp No",
-                      "Last Name",
-                      "First Name",
-                      "Gender",
-                      "Hire Date",
-                      "Sep Date",
-                      "Current Job",
-                      "Status",
-                      ...(showStamp ? ["Stamp"] : []),
-                      ...(canEdit || canDel ? [""] : []),
-                    ].map((h) => (
+                      { label: "Emp No", cls: "" },
+                      { label: "Last Name", cls: "" },
+                      { label: "First Name", cls: "hidden sm:table-cell" },
+                      { label: "Gender", cls: "hidden md:table-cell" },
+                      { label: "Hire Date", cls: "hidden lg:table-cell" },
+                      { label: "Sep Date", cls: "hidden lg:table-cell" },
+                      { label: "Current Job", cls: "hidden md:table-cell" },
+                      { label: "Status", cls: "" },
+                      ...(showStamp
+                        ? [{ label: "Stamp", cls: "hidden xl:table-cell" }]
+                        : []),
+                      ...(canEdit || canDel
+                        ? [{ label: "", cls: "" }]
+                        : []),
+                    ].map(({ label, cls }, i) => (
                       <th
-                        key={h}
-                        className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400"
+                        key={label + i}
+                        className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 ${cls}`}
                       >
-                        {h}
+                        {label}
                       </th>
                     ))}
                   </tr>
@@ -305,12 +309,12 @@ export default function EmployeesPage() {
                         </td>
 
                         {/* first name */}
-                        <td className="px-4 py-3.5 text-gray-700">
+                        <td className="hidden sm:table-cell px-4 py-3.5 text-gray-700">
                           {emp.firstname}
                         </td>
 
                         {/* gender */}
-                        <td className="px-4 py-3.5 text-gray-500">
+                        <td className="hidden md:table-cell px-4 py-3.5 text-gray-500">
                           {emp.gender === "M"
                             ? "Male"
                             : emp.gender === "F"
@@ -319,12 +323,12 @@ export default function EmployeesPage() {
                         </td>
 
                         {/* hire date */}
-                        <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
+                        <td className="hidden lg:table-cell px-4 py-3.5 text-gray-500 whitespace-nowrap">
                           {formatDate(emp.hiredate)}
                         </td>
 
                         {/* sep date */}
-                        <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
+                        <td className="hidden lg:table-cell px-4 py-3.5 text-gray-500 whitespace-nowrap">
                           {emp.sepdate ? (
                             <span className="text-orange-600">
                               {formatDate(emp.sepdate)}
@@ -335,7 +339,7 @@ export default function EmployeesPage() {
                         </td>
 
                         {/* current job — from employee_current_job view */}
-                        <td className="px-4 py-3.5">
+                        <td className="hidden md:table-cell px-4 py-3.5">
                           {emp.jobdesc ? (
                             <span>
                               <span className="text-gray-800 font-medium">
@@ -359,7 +363,7 @@ export default function EmployeesPage() {
 
                         {/* stamp — ADMIN/SUPERADMIN only */}
                         {showStamp && (
-                          <td className="px-4 py-3.5 max-w-[160px]">
+                          <td className="hidden xl:table-cell px-4 py-3.5 max-w-[160px]">
                             {emp.stamp ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-50 text-violet-700 truncate max-w-full">
                                 {emp.stamp}
@@ -376,7 +380,7 @@ export default function EmployeesPage() {
                             className="px-4 py-3.5"
                             onClick={(e) => e.stopPropagation()} // don't navigate when clicking actions
                           >
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                               {canEdit && (
                                 <button
                                   onClick={() => setEditTarget(emp)}
