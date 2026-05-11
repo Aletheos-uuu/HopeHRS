@@ -19,7 +19,7 @@ export default function SidebarUser({ user }) {
 
   const handleSignOut = async () => {
     await signOut()
-    navigate('/')
+    navigate('/login', { replace: true })
   }
 
   const initials = getInitials(user)
