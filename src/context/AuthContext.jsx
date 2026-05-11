@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
   // setLoading(false) only runs once, whichever event finishes first,
   // and is never called again by subsequent auth events.
   const initializedRef = useRef(false);
+  const currentUserIdRef = useRef(null);
 
   const fetchEmployees = async () => {
     const { data: employeesData, error: empErr } = await supabase
@@ -117,6 +118,7 @@ export const AuthProvider = ({ children }) => {
         const validatedUser = await checkUserStatus(session.user);
         setSession(validatedUser ? session : null);
         setCurrentUser(validatedUser ?? null);
+        currentUserIdRef.current = validatedUser?.id ?? null;
         if (validatedUser) fetchEmployees();
       }
       initializedRef.current = true; // ← mark init done
@@ -125,24 +127,34 @@ export const AuthProvider = ({ children }) => {
 
     // Ongoing listener — never touches loading
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
-      console.log("auth event:", event);
-      // Skip SIGNED_IN if getSession() already handled it
-      if (event === "SIGNED_IN") {
-        if (!initializedRef.current) return;  // ← skip duplicate
-        const validatedUser = await checkUserStatus(session.user);
-        setSession(validatedUser ? session : null);
-        setCurrentUser(validatedUser ?? null);
-        if (validatedUser) fetchEmployees();
-      } else if (event === "SIGNED_OUT") {
-        setSession(null);
-        setCurrentUser(null);
-        setUserRole(null);
-        setEmployees([]);
-        setAuthError(null);
-      }
+  async (event, session) => {
+    console.log("auth event:", event)
+
+    if (event === "TOKEN_REFRESHED") {
+      // Token silently refreshed — just update the session, no re-validation needed
+      setSession(session)
+      return
     }
-  );
+
+    if (event === "SIGNED_IN") {
+      if (!initializedRef.current) return
+      // Same user as before (e.g. tab regained focus) — nothing to do
+      if (currentUserIdRef.current === session?.user?.id) return
+      const validatedUser = await checkUserStatus(session.user)
+      setSession(validatedUser ? session : null)
+      setCurrentUser(validatedUser ?? null)
+      currentUserIdRef.current = validatedUser?.id ?? null
+      if (validatedUser) fetchEmployees()
+    } else if (event === "SIGNED_OUT") {
+      setSession(null)
+      setCurrentUser(null)
+      setUserRole(null)
+      setEmployees([])
+      setAuthError(null)
+      currentUserIdRef.current = null
+    }
+  }
+);
 
     return () => subscription.unsubscribe();
   }, []);

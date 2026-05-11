@@ -1,11 +1,10 @@
 import { supabase } from '../lib/supabaseClient'
 
-// GET — USER sees only ACTIVE, ADMIN/SUPERADMIN sees all
 export async function getDepts(userType) {
   let query = supabase
     .from('department')
     .select('*')
-    .order('deptCode', { ascending: true })
+    .order('deptcode', { ascending: true })
 
   if (userType === 'USER') query = query.eq('record_status', 'ACTIVE')
 
@@ -14,7 +13,6 @@ export async function getDepts(userType) {
   return data
 }
 
-// ADD
 export async function addDept(deptData, currentUser) {
   const { data, error } = await supabase
     .from('department')
@@ -29,7 +27,6 @@ export async function addDept(deptData, currentUser) {
   return data
 }
 
-// UPDATE
 export async function updateDept(deptCode, updates, currentUser) {
   const { data, error } = await supabase
     .from('department')
@@ -37,14 +34,13 @@ export async function updateDept(deptCode, updates, currentUser) {
       ...updates,
       stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`
     })
-    .eq('deptCode', deptCode)
+    .eq('deptcode', deptCode)
     .select()
 
   if (error) throw error
   return data
 }
 
-// SOFT DELETE
 export async function softDeleteDept(deptCode, currentUser) {
   const { data, error } = await supabase
     .from('department')
@@ -52,14 +48,13 @@ export async function softDeleteDept(deptCode, currentUser) {
       record_status: 'INACTIVE',
       stamp: `Deleted by ${currentUser.email} on ${new Date().toISOString()}`
     })
-    .eq('deptCode', deptCode)
+    .eq('deptcode', deptCode)
     .select()
 
   if (error) throw error
   return data
 }
 
-// RECOVER
 export async function recoverDept(deptCode, currentUser) {
   const { data, error } = await supabase
     .from('department')
@@ -67,7 +62,7 @@ export async function recoverDept(deptCode, currentUser) {
       record_status: 'ACTIVE',
       stamp: `Recovered by ${currentUser.email} on ${new Date().toISOString()}`
     })
-    .eq('deptCode', deptCode)
+    .eq('deptcode', deptCode)
     .select()
 
   if (error) throw error

@@ -125,6 +125,14 @@ function ProfileCard({ employee }) {
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                  Birthdate
+                </dt>
+                <dd className="mt-0.5 text-sm text-gray-700">
+                  {formatDate(employee.birthdate)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                   Hire Date
                 </dt>
                 <dd className="mt-0.5 text-sm text-gray-700">
@@ -133,17 +141,13 @@ function ProfileCard({ employee }) {
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
-                  {employee.sepdate ? "Separation Date" : "Status"}
+                  {employee.sepdate ? 'Separation Date' : 'Status'}
                 </dt>
                 <dd className="mt-0.5 text-sm text-gray-700">
                   {employee.sepdate ? (
-                    <span className="text-orange-600">
-                      {formatDate(employee.sepdate)}
-                    </span>
+                    <span className="text-orange-600">{formatDate(employee.sepdate)}</span>
                   ) : (
-                    <span className="text-green-600 font-medium">
-                      Currently employed
-                    </span>
+                    <span className="text-green-600 font-medium">Currently employed</span>
                   )}
                 </dd>
               </div>

@@ -39,9 +39,8 @@ export default function AddDeptModal({ open, onClose, onSuccess }) {
     setServerError('')
 
     const { error } = await supabase.from('department').insert({
-
-      dept_code: form.deptCode.trim().toUpperCase(),
-      dept_name: form.deptName.trim(),
+      deptcode: form.deptCode.trim().toUpperCase(),
+      deptname: form.deptName.trim(),
     })
 
     setSaving(false)

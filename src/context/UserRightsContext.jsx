@@ -15,60 +15,60 @@ export const UserRightsProvider = ({ children }) => {
   const fetchedForRef = useRef(null); // tracks which userId we last fetched for
 
   const fetchRights = async (userId) => {
-    console.log("fetchRights called:", userId);
+  console.log("fetchRights called:", userId)
 
-    if (!userId) {
-      setRights({});
-      setLoading(false);
-      fetchedForRef.current = null;
-      return;
+  if (!userId) {
+    setRights({})
+    setLoading(false)
+    fetchedForRef.current = null
+    return
+  }
+
+  if (fetchedForRef.current === userId) {
+    setLoading(false)
+    return
+  }
+
+  // ← REMOVED: setLoading(true) — initial useState(true) handles the first load;
+  //   re-fetches run silently so a token refresh never re-triggers the app spinner
+  try {
+    const { data: userModules, error: umError } = await supabase
+      .from("user_module")
+      .select("user_module_id")
+      .eq("userId", userId)
+
+    if (umError) throw umError
+
+    const moduleIds = (userModules ?? []).map((m) => m.user_module_id)
+
+    if (moduleIds.length === 0) {
+      setRights({})
+      fetchedForRef.current = userId
+      return
     }
 
-    // ✅ Don't re-fetch or re-set loading if we already have rights for this user
-    if (fetchedForRef.current === userId) {
-      setLoading(false);
-      return;
-    }
+    const { data, error } = await supabase
+      .from("UserModule_Rights")
+      .select("rights_code, right_value")
+      .in("user_module_id", moduleIds)
 
-    setLoading(true);
-    try {
-      const { data: userModules, error: umError } = await supabase
-        .from("user_module")
-        .select("user_module_id")
-        .eq("userId", userId);
+    if (error) throw error
 
-      if (umError) throw umError;
+    const rightsMap = (data ?? []).reduce((acc, curr) => {
+      acc[curr.rights_code] = curr.right_value === 1
+      return acc
+    }, {})
 
-      const moduleIds = (userModules ?? []).map((m) => m.user_module_id);
-
-      if (moduleIds.length === 0) {
-        setRights({});
-        fetchedForRef.current = userId;
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("UserModule_Rights")
-        .select("rights_code, right_value")
-        .in("user_module_id", moduleIds);
-
-      if (error) throw error;
-
-      const rightsMap = (data ?? []).reduce((acc, curr) => {
-        acc[curr.rights_code] = curr.right_value === 1;
-        return acc;
-      }, {});
-
-      setRights(rightsMap);
-      fetchedForRef.current = userId; // ✅ mark as fetched for this user
-    } catch (err) {
-      console.error("Error fetching user rights:", err);
-      setRights({});
-    } finally {
-      console.log("fetchRights done → loading false");
-      setLoading(false);
-    }
-  };
+    setRights(rightsMap)
+    fetchedForRef.current = userId
+  } catch (err) {
+    console.error("Error fetching user rights:", err)
+    setRights({})
+  } finally {
+    console.log("fetchRights done → loading false")
+    setLoading(false)
+  }
+};
 
   useEffect(() => {
     if (authLoading) return;
