@@ -4,7 +4,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import AuthCallback from './pages/AuthCallback'
 import EmployeesPage from './pages/EmployeesPage'
-import EmployeeDetailPage from "./pages/JobHistoryPage";
+import JobHistoryPage from './pages/JobHistoryPage'  // ✅ correct file'
 import JobsPage from './pages/JobsPage'
 import DepartmentsPage from './pages/DepartmentsPage'
 import UserManagementPage from './pages/UserManagementPage'
@@ -21,7 +21,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/employees" element={<EmployeesPage />} />
-          <Route path="/employees/:empNo" element={<EmployeeDetailPage />} />
+          <Route path="jobhistory" element={<JobHistoryPage />} />  
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
           <Route path="/admin" element={<UserManagementPage />} />

@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }) => {
   // SIGNED_IN + INITIAL_SESSION both fire on page load — this ensures
   // setLoading(false) only runs once, whichever event finishes first,
   // and is never called again by subsequent auth events.
+  const initializedRef = useRef(false);
 
   const fetchEmployees = async () => {
     const { data: employeesData, error: empErr } = await supabase
@@ -116,15 +117,17 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(validatedUser ?? null);
         if (validatedUser) fetchEmployees();
       }
+      initializedRef.current = true; // ← mark init done
       setLoading(false);
     });
 
     // Ongoing listener — never touches loading
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
       console.log("auth event:", event);
-      if (event === "SIGNED_IN" && session?.user) {
+      // Skip SIGNED_IN if getSession() already handled it
+      if (event === "SIGNED_IN") {
+        if (!initializedRef.current) return;  // ← skip duplicate
         const validatedUser = await checkUserStatus(session.user);
         setSession(validatedUser ? session : null);
         setCurrentUser(validatedUser ?? null);
@@ -136,7 +139,8 @@ export const AuthProvider = ({ children }) => {
         setEmployees([]);
         setAuthError(null);
       }
-    });
+    }
+  );
 
     return () => subscription.unsubscribe();
   }, []);
@@ -173,21 +177,21 @@ export const useAuth = () => {
 
 const PERMISSIONS = {
   IS_ADMIN: ["ADMIN", "SUPERADMIN"],
-  
+
   // ADD + EDIT: both ADMIN and SUPERADMIN
-  EMP_ADD:  ["ADMIN", "SUPERADMIN"],
+  EMP_ADD: ["ADMIN", "SUPERADMIN"],
   EMP_EDIT: ["ADMIN", "SUPERADMIN"],
-  JH_ADD:   ["ADMIN", "SUPERADMIN"],
-  JH_EDIT:  ["ADMIN", "SUPERADMIN"],
-  JOB_ADD:  ["ADMIN", "SUPERADMIN"],
+  JH_ADD: ["ADMIN", "SUPERADMIN"],
+  JH_EDIT: ["ADMIN", "SUPERADMIN"],
+  JOB_ADD: ["ADMIN", "SUPERADMIN"],
   JOB_EDIT: ["ADMIN", "SUPERADMIN"],
   DEPT_ADD: ["ADMIN", "SUPERADMIN"],
   DEPT_EDIT: ["ADMIN", "SUPERADMIN"],
-  
+
   // DELETE: SUPERADMIN only
-  EMP_DEL:  ["SUPERADMIN"],
-  JH_DEL:   ["SUPERADMIN"],
-  JOB_DEL:  ["SUPERADMIN"],
+  EMP_DEL: ["SUPERADMIN"],
+  JH_DEL: ["SUPERADMIN"],
+  JOB_DEL: ["SUPERADMIN"],
   DEPT_DEL: ["SUPERADMIN"],
 };
 

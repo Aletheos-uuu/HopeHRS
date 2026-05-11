@@ -63,6 +63,8 @@ function FieldError({ message }) {
 
 export default function EditJobHistoryModal({
   row,
+  // BUG FIX: prop was named "job" in this component but parent was passing it as "jobs"
+  // (undefined). Standardized to "jobs" here and fixed the parent call site too.
   jobs,
   depts,
   onSuccess,
@@ -71,25 +73,26 @@ export default function EditJobHistoryModal({
   const { currentUser } = useAuth();
 
   const [form, setForm] = useState({
-    effDate: "",
-    jobCode: "",
-    deptCode: "",
+    effdate: "",
+    jobcode: "",
+    deptcode: "",
     salary: "",
   });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState(null);
 
-  const jobOptions = Object.entries(jobs);
-  const deptOptions = Object.entries(depts);
+  // BUG FIX: Object.entries on jobs/depts — keys from Supabase are lowercase.
+  const jobOptions = Object.entries(jobs ?? {});
+  const deptOptions = Object.entries(depts ?? {});
 
-  // seed from row
+  // seed from row — BUG FIX: use lowercase column names from Supabase response
   useEffect(() => {
     if (row) {
       setForm({
-        effDate: row.effDate ?? "",
-        jobCode: row.jobCode ?? "",
-        deptCode: row.deptCode ?? "",
+        effdate: row.effdate ?? "",   // was row.effDate
+        jobcode: row.jobcode ?? "",   // was row.jobCode
+        deptcode: row.deptcode ?? "", // was row.deptCode
         salary: row.salary != null ? String(row.salary) : "",
       });
       setErrors({});
@@ -104,9 +107,9 @@ export default function EditJobHistoryModal({
 
   function validate() {
     const errs = {};
-    if (!form.effDate) errs.effDate = "Effective date is required.";
-    if (!form.jobCode) errs.jobCode = "Job is required.";
-    if (!form.deptCode) errs.deptCode = "Department is required.";
+    if (!form.effdate) errs.effdate = "Effective date is required.";
+    if (!form.jobcode) errs.jobcode = "Job is required.";
+    if (!form.deptcode) errs.deptcode = "Department is required.";
     if (form.salary && isNaN(Number(form.salary)))
       errs.salary = "Must be a number.";
     return errs;
@@ -122,22 +125,44 @@ export default function EditJobHistoryModal({
     setSaving(true);
     setApiError(null);
     try {
+      // BUG FIX: composite PK comparison and payload keys must all be lowercase
+      const pkChanged =
+        form.effdate !== row.effdate || form.jobcode !== row.jobcode;
+
       const payload = {
-        effDate: form.effDate,
-        jobCode: form.jobCode,
-        deptCode: form.deptCode,
+        empno: row.empno,
+        effdate: form.effdate,
+        jobcode: form.jobcode,
+        deptcode: form.deptcode,
         salary: form.salary ? Number(form.salary) : null,
+        record_status: "ACTIVE",
         stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`,
       };
 
-      const { error } = await supabase
-        .from("jobHistory")
-        .update(payload)
-        .eq("empNo", row.empNo)
-        .eq("jobCode", row.jobCode)
-        .eq("effDate", row.effDate);
+      if (pkChanged) {
+        // Composite PK changed: soft-delete old row, insert new one
+        const { error: delErr } = await supabase
+          .from("jobhistory")
+          .update({ record_status: "INACTIVE" })
+          .eq("empno", row.empno)
+          .eq("jobcode", row.jobcode)   // BUG FIX: was "jobCode"
+          .eq("effdate", row.effdate);  // BUG FIX: was "effDate"
+        if (delErr) throw delErr;
 
-      if (error) throw error;
+        const { error: insErr } = await supabase
+          .from("jobhistory")
+          .insert(payload);
+        if (insErr) throw insErr;
+      } else {
+        const { error } = await supabase
+          .from("jobhistory")
+          .update(payload)
+          .eq("empno", row.empno)
+          .eq("jobcode", row.jobcode)   // BUG FIX: was "jobCode"
+          .eq("effdate", row.effdate);  // BUG FIX: was "effDate"
+        if (error) throw error;
+      }
+
       onSuccess();
     } catch (err) {
       setApiError(err.message);
@@ -163,7 +188,7 @@ export default function EditJobHistoryModal({
               Edit Job History Entry
             </h2>
             <p className="text-xs text-gray-400 mt-0.5 font-mono">
-              Employee #{row?.empNo}
+              Employee #{row?.empno}
             </p>
           </div>
           <button
@@ -198,14 +223,14 @@ export default function EditJobHistoryModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Effective Date */}
             <div>
-              <Label htmlFor="edit-effDate">Effective Date *</Label>
+              <Label htmlFor="edit-effdate">Effective Date *</Label>
               <Input
-                id="edit-effDate"
+                id="edit-effdate"
                 type="date"
-                value={form.effDate}
-                onChange={(e) => set("effDate", e.target.value)}
+                value={form.effdate}
+                onChange={(e) => set("effdate", e.target.value)}
               />
-              <FieldError message={errors.effDate} />
+              <FieldError message={errors.effdate} />
             </div>
 
             {/* Salary */}
@@ -223,11 +248,11 @@ export default function EditJobHistoryModal({
 
             {/* Job */}
             <div>
-              <Label htmlFor="edit-jobCode">Job *</Label>
+              <Label htmlFor="edit-jobcode">Job *</Label>
               <Select
-                id="edit-jobCode"
-                value={form.jobCode}
-                onChange={(e) => set("jobCode", e.target.value)}
+                id="edit-jobcode"
+                value={form.jobcode}
+                onChange={(e) => set("jobcode", e.target.value)}
               >
                 <option value="">Select job…</option>
                 {jobOptions.map(([code, desc]) => (
@@ -236,16 +261,16 @@ export default function EditJobHistoryModal({
                   </option>
                 ))}
               </Select>
-              <FieldError message={errors.jobCode} />
+              <FieldError message={errors.jobcode} />
             </div>
 
             {/* Department */}
             <div>
-              <Label htmlFor="edit-deptCode">Department *</Label>
+              <Label htmlFor="edit-deptcode">Department *</Label>
               <Select
-                id="edit-deptCode"
-                value={form.deptCode}
-                onChange={(e) => set("deptCode", e.target.value)}
+                id="edit-deptcode"
+                value={form.deptcode}
+                onChange={(e) => set("deptcode", e.target.value)}
               >
                 <option value="">Select department…</option>
                 {deptOptions.map(([code, name]) => (
@@ -254,7 +279,7 @@ export default function EditJobHistoryModal({
                   </option>
                 ))}
               </Select>
-              <FieldError message={errors.deptCode} />
+              <FieldError message={errors.deptcode} />
             </div>
           </div>
 
