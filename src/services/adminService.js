@@ -15,7 +15,8 @@ import { supabase } from '../lib/supabaseClient'
  */
 
 function makeStamp(action, byUserId) {
-  return `${action} ${byUserId} ${new Date().toISOString()}`
+  const date = new Date().toISOString().slice(0, 10)
+  return `${action} by ${byUserId} on ${date}`.slice(0, 60)
 }
 
 /**
@@ -27,7 +28,7 @@ function makeStamp(action, byUserId) {
 export async function getUsers() {
   const { data, error } = await supabase
     .from('user')
-    .select('userId, username, firstname, lastname, email, user_type, record_status')
+    .select('userId, username, email, user_type, record_status, stamp')
     .order('user_type', { ascending: true })
     .order('username', { ascending: true })
 
