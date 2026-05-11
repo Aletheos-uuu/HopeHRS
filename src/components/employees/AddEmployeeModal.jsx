@@ -1,15 +1,16 @@
-import { useState } from 'react'
-import { supabase } from '../../lib/supabaseClient'
+import { useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
+import { addEmployee } from "../../services/employeeService";
 
-const GENDER_OPTIONS = ['M', 'F', 'Other']
+const GENDER_OPTIONS = ["M", "F"];
 
 const EMPTY_FORM = {
-  empno:     '',
-  lastname:  '',
-  firstname: '',
-  gender:    '',
-  hiredate:  '',
-}
+  empno: "",
+  lastname: "",
+  firstname: "",
+  gender: "",
+  hiredate: "",
+};
 
 function FormField({ label, error, children }) {
   return (
@@ -20,64 +21,61 @@ function FormField({ label, error, children }) {
       {children}
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
-  )
+  );
 }
 
 const inputCls =
-  'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 disabled:opacity-50'
+  "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 disabled:opacity-50";
 
-export default function AddEmployeeModal({ open, onClose, onSuccess }) {
-  const [form, setForm]     = useState(EMPTY_FORM)
-  const [errors, setErrors] = useState({})
-  const [saving, setSaving] = useState(false)
-  const [apiError, setApiError] = useState('')
+export default function AddEmployeeModal({ open, onClose, onSuccess, currentUser }) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState("");
 
-  if (!open) return null
+  if (!open) return null;
 
   function set(field, value) {
-    setForm((f) => ({ ...f, [field]: value }))
-    setErrors((e) => ({ ...e, [field]: '' }))
+    setForm((f) => ({ ...f, [field]: value }));
+    setErrors((e) => ({ ...e, [field]: "" }));
   }
 
   function validate() {
-    const errs = {}
-    if (!form.empno.trim())    errs.empno    = 'Employee number is required'
-    if (!form.lastname.trim()) errs.lastname = 'Last name is required'
-    if (!form.firstname.trim()) errs.firstname = 'First name is required'
-    if (!form.gender)           errs.gender   = 'Gender is required'
-    if (!form.hiredate)         errs.hiredate = 'Hire date is required'
-    return errs
+    const errs = {};
+    if (!form.empno.trim()) errs.empno = "Employee number is required";
+    if (!form.lastname.trim()) errs.lastname = "Last name is required";
+    if (!form.firstname.trim()) errs.firstname = "First name is required";
+    if (!form.gender) errs.gender = "Gender is required";
+    if (!form.hiredate) errs.hiredate = "Hire date is required";
+    return errs;
   }
 
   async function handleSubmit() {
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-
-    setSaving(true)
-    setApiError('')
-
-    const { data, error } = await supabase
-      .from('employees')
-      .insert([{ ...form, status: 'ACTIVE' }])
-      .select()
-      .single()
-
-    setSaving(false)
-
-    if (error) {
-      setApiError(error.message)
-      return
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
     }
 
-    setForm(EMPTY_FORM)
-    onSuccess?.(data)
+    setSaving(true);
+    setApiError("");
+
+    try {
+      const data = await addEmployee(form, currentUser);
+      setForm(EMPTY_FORM);
+      onSuccess?.(data?.[0]);
+    } catch (err) {
+      setApiError(err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleClose() {
-    setForm(EMPTY_FORM)
-    setErrors({})
-    setApiError('')
-    onClose()
+    setForm(EMPTY_FORM);
+    setErrors({});
+    setApiError("");
+    onClose();
   }
 
   return (
@@ -114,7 +112,7 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
             <input
               className={inputCls}
               value={form.empno}
-              onChange={(e) => set('empno', e.target.value)}
+              onChange={(e) => set("empno", e.target.value)}
               placeholder="e.g. EMP-0001"
               disabled={saving}
             />
@@ -125,7 +123,7 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
               <input
                 className={inputCls}
                 value={form.lastname}
-                onChange={(e) => set('lastname', e.target.value)}
+                onChange={(e) => set("lastname", e.target.value)}
                 disabled={saving}
               />
             </FormField>
@@ -133,7 +131,7 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
               <input
                 className={inputCls}
                 value={form.firstname}
-                onChange={(e) => set('firstname', e.target.value)}
+                onChange={(e) => set("firstname", e.target.value)}
                 disabled={saving}
               />
             </FormField>
@@ -144,12 +142,14 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
               <select
                 className={inputCls}
                 value={form.gender}
-                onChange={(e) => set('gender', e.target.value)}
+                onChange={(e) => set("gender", e.target.value)}
                 disabled={saving}
               >
                 <option value="">— select —</option>
                 {GENDER_OPTIONS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
             </FormField>
@@ -158,7 +158,7 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
                 type="date"
                 className={inputCls}
                 value={form.hiredate}
-                onChange={(e) => set('hiredate', e.target.value)}
+                onChange={(e) => set("hiredate", e.target.value)}
                 disabled={saving}
               />
             </FormField>
@@ -179,10 +179,10 @@ export default function AddEmployeeModal({ open, onClose, onSuccess }) {
             disabled={saving}
             className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors disabled:opacity-50"
           >
-            {saving ? 'Saving…' : 'Add employee'}
+            {saving ? "Saving…" : "Add employee"}
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

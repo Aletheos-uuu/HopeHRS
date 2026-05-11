@@ -424,6 +424,7 @@ export default function EmployeesPage() {
             setAddOpen(false);
             fetchEmployees();
           }}
+          currentUser={currentUser}
         />
       )}
       {canEdit && editTarget && (

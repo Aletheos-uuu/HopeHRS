@@ -4,8 +4,9 @@ import { supabase } from '../lib/supabaseClient'
 // RLS enforces ACTIVE-only for USER; service filter is belt-and-suspenders
 export async function getEmployees(userType) {
   let query = supabase
-    .from('employee_current_job')
-    .select('*')
+    .from('employee')         
+    .select('empno, lastname, firstname, gender, hiredate, sepdate, record_status, stamp')
+    .order('empno')
 
   if (userType === 'USER') {
     query = query.eq('record_status', 'ACTIVE')
@@ -18,13 +19,16 @@ export async function getEmployees(userType) {
 
 // ADD
 export async function addEmployee(employeeData, currentUser) {
+  const payload = {
+    ...employeeData,
+    record_status: 'ACTIVE',
+    stamp: `ADD|${currentUser?.email ?? 'unknown'}|${new Date().toISOString().slice(0,10)}`
+  }
+  console.log('insert payload:', payload)  // add this
+  
   const { data, error } = await supabase
     .from('employee')
-    .insert([{
-      ...employeeData,
-      record_status: 'ACTIVE',
-      stamp: `Added by ${currentUser.email} on ${new Date().toISOString()}`
-    }])
+    .insert([payload])
     .select()
 
   if (error) throw error
@@ -37,7 +41,7 @@ export async function updateEmployee(empno, updates, currentUser) {
     .from('employee')
     .update({
       ...updates,
-      stamp: `Edited by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `EDIT|${currentUser.email}|${new Date().toISOString().slice(0,10)}`
     })
     .eq('empno', empno)
     .select()
@@ -52,7 +56,7 @@ export async function softDeleteEmployee(empno, currentUser) {
     .from('employee')
     .update({
       record_status: 'INACTIVE',
-      stamp: `Deleted by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `DELETE|${currentUser.email}|${new Date().toISOString().slice(0,10)}`
     })
     .eq('empno', empno)
     .select()
@@ -67,7 +71,7 @@ export async function recoverEmployee(empno, currentUser) {
     .from('employee')
     .update({
       record_status: 'ACTIVE',
-      stamp: `Recovered by ${currentUser.email} on ${new Date().toISOString()}`
+      stamp: `RECOVER|${currentUser.email}|${new Date().toISOString().slice(0,10)}`
     })
     .eq('empno', empno)
     .select()
