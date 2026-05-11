@@ -7,8 +7,6 @@ import LoadingSpinner from '../components/ui/LoadingSpinner'
 import EmptyState from '../components/ui/EmptyState'
 import TableSkeleton from '../components/ui/TableSkeleton'
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
 function IconButton({ onClick, title, children }) {
   return (
     <button
@@ -65,7 +63,8 @@ function DeleteConfirm({ dept, onConfirm, onCancel, deleting }) {
         </div>
         <div className="text-center space-y-1">
           <p className="text-sm font-semibold text-gray-900">Remove department?</p>
-          <p className="text-xs text-gray-500"><span className="font-medium text-gray-700">{dept?.dept_name}</span></p>
+          {/* ✅ was dept?.dept_name */}
+          <p className="text-xs text-gray-500"><span className="font-medium text-gray-700">{dept?.deptname}</span></p>
           <p className="text-xs text-gray-400 mt-1">This will be soft-deleted and recoverable by an admin.</p>
         </div>
         <div className="flex gap-3">
@@ -78,8 +77,6 @@ function DeleteConfirm({ dept, onConfirm, onCancel, deleting }) {
     </div>
   )
 }
-
-// ─── main page ───────────────────────────────────────────────────────────────
 
 export default function DepartmentsPage() {
   const { currentUser } = useAuth()
@@ -101,8 +98,10 @@ export default function DepartmentsPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from('department')
-      .select('dept_code, dept_name, record_status, stamp')
-      .order('dept_code', { ascending: true })
+      // ✅ was 'dept_code, dept_name, record_status, stamp'
+      .select('deptcode, deptname, record_status, stamp')
+      // ✅ was 'dept_code'
+      .order('deptcode', { ascending: true })
     if (!error) setDepartment(data ?? [])
     setLoading(false)
   }
@@ -113,10 +112,9 @@ export default function DepartmentsPage() {
     const { error } = await supabase
       .from('department')
       .update({ record_status: 'INACTIVE' })
-      .eq('deptCode', deleteDept.dept_code)
-    if (error) {
-      await supabase.from('department').update({ record_status: 'INACTIVE' }).eq('dept_code', deleteDept.dept_code)
-    }
+      // ✅ was 'deptCode' then 'dept_code' — correct column is 'deptcode'
+      .eq('deptcode', deleteDept.deptcode)
+    if (error) console.error('Delete failed:', error)
     setDeleting(false)
     setDeleteDept(null)
     fetchDepartment()
@@ -126,15 +124,14 @@ export default function DepartmentsPage() {
 
   const filtered = department.filter((d) => {
     const q = search.toLowerCase()
-    return d.dept_code.toLowerCase().includes(q) || d.dept_name.toLowerCase().includes(q)
+    // ✅ was d.dept_code, d.dept_name
+    return d.deptcode.toLowerCase().includes(q) || d.deptname.toLowerCase().includes(q)
   })
 
-  // col count for TableSkeleton
   const colCount = 3 + (showStamp ? 1 : 0) + (canEdit || canDel ? 1 : 0)
 
   return (
     <div className="p-6 sm:p-8 max-w-5xl mx-auto">
-      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Departments</h1>
@@ -169,7 +166,6 @@ export default function DepartmentsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -196,9 +192,11 @@ export default function DepartmentsPage() {
                 </tr>
               ) : (
                 filtered.map((dept) => (
-                  <tr key={dept.dept_code} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-700 font-medium tracking-wide">{dept.dept_code}</td>
-                    <td className="px-4 py-3 text-gray-800">{dept.dept_name}</td>
+                  // ✅ was dept.dept_code
+                  <tr key={dept.deptcode} className="hover:bg-gray-50/60 transition-colors">
+                    {/* ✅ was dept.dept_code, dept.dept_name */}
+                    <td className="px-4 py-3 font-mono text-xs text-gray-700 font-medium tracking-wide">{dept.deptcode}</td>
+                    <td className="px-4 py-3 text-gray-800">{dept.deptname}</td>
                     <td className="px-4 py-3"><StatusBadge status={dept.record_status} /></td>
                     {showStamp && (
                       <td className="px-4 py-3 text-gray-500 text-xs">
@@ -224,9 +222,13 @@ export default function DepartmentsPage() {
         </div>
       </div>
 
-      {/* Modals */}
       <AddDeptModal open={addOpen} onClose={() => setAddOpen(false)} onSuccess={fetchDepartment} />
-      <EditDeptModal open={!!editDept} onClose={() => setEditDept(null)} onSuccess={() => { setEditDept(null); fetchDepartment() }} department={editDept} />
+      <EditDeptModal
+        open={!!editDept}
+        onClose={() => setEditDept(null)}
+        onSuccess={() => { setEditDept(null); fetchDepartment() }}
+        department={editDept}
+      />
       {deleteDept && (
         <DeleteConfirm dept={deleteDept} onConfirm={handleDelete} onCancel={() => setDeleteDept(null)} deleting={deleting} />
       )}
