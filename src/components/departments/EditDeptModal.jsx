@@ -16,7 +16,7 @@ export default function EditDeptModal({ open, onClose, onSuccess, department }) 
   // Seed from prop
   useEffect(() => {
     if (department) {
-      setForm({ deptName: department.dept_name ?? '' })
+      setForm({ deptName: department.deptname ?? '' })
       setErrors({})
       setServerError('')
     }
@@ -43,11 +43,9 @@ export default function EditDeptModal({ open, onClose, onSuccess, department }) 
     setServerError('')
 
     const { error } = await supabase
-
       .from('department')
-
-      .update({ dept_name: form.deptName.trim() })
-      .eq('dept_code', department.dept_code)
+      .update({ deptname: form.deptName.trim() })
+      .eq('deptcode', department.deptcode)
 
     setSaving(false)
 
@@ -66,7 +64,7 @@ export default function EditDeptModal({ open, onClose, onSuccess, department }) 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Department Code</label>
           <div className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-sm text-gray-500 font-mono tracking-wide">
-            {department.dept_code}
+            {department.deptcode}
           </div>
           <p className="mt-1 text-xs text-gray-400">Department code cannot be changed after creation.</p>
         </div>

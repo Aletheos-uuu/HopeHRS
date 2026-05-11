@@ -6,12 +6,12 @@ import { supabase } from '../lib/supabaseClient'
  * Reads from the headcount_by_dept view created by M3.
  * Returns rows ordered by active_employee_count descending.
  *
- * @returns {Promise<Array>} [{ deptCode, deptName, active_employee_count }]
+ * @returns {Promise<Array>} [{ deptcode, deptname, active_employee_count }]
  */
 export async function getHeadcountByDept() {
   const { data, error } = await supabase
     .from('headcount_by_dept')
-    .select('deptCode, deptName, active_employee_count')
+    .select('deptcode, deptname, active_employee_count')
     .order('active_employee_count', { ascending: false })
 
   if (error) {
@@ -26,12 +26,12 @@ export async function getHeadcountByDept() {
  * Reads from the salary_summary_by_job view created by M3.
  * Returns rows ordered by avg_salary descending.
  *
- * @returns {Promise<Array>} [{ jobCode, jobDesc, employee_count, min_salary, max_salary, avg_salary }]
+ * @returns {Promise<Array>} [{ jobcode, jobdesc, employee_count, min_salary, max_salary, avg_salary }]
  */
 export async function getSalarySummaryByJob() {
   const { data, error } = await supabase
     .from('salary_summary_by_job')
-    .select('jobCode, jobDesc, employee_count, min_salary, max_salary, avg_salary')
+    .select('jobcode, jobdesc, employee_count, min_salary, max_salary, avg_salary')
     .order('avg_salary', { ascending: false })
 
   if (error) {
@@ -43,31 +43,31 @@ export async function getSalarySummaryByJob() {
 
 /**
  * Fetch the complete chronological job history for a single employee.
- * Joins jobHistory → job (for jobDesc) → department (for deptName).
- * Returns only ACTIVE jobHistory rows, sorted by effDate ascending.
+ * Joins jobhistory → job (for jobdesc) → department (for deptname).
+ * Returns only ACTIVE jobhistory rows, sorted by effdate ascending.
  *
  * @param {string} empNo - The employee number (e.g. '00001').
- * @returns {Promise<Array>} [{ empNo, jobCode, jobDesc, deptCode, deptName, salary, effDate, stamp }]
+ * @returns {Promise<Array>} [{ empno, jobcode, jobdesc, deptcode, deptname, salary, effdate, stamp }]
  */
 export async function getEmployeeFullHistory(empNo) {
   if (!empNo) return []
 
   const { data, error } = await supabase
-    .from('jobHistory')
+    .from('jobhistory')
     .select(`
-      empNo,
-      jobCode,
-      job ( jobDesc ),
-      deptCode,
-      department ( deptName ),
+      empno,
+      jobcode,
+      job ( jobdesc ),
+      deptcode,
+      department ( deptname ),
       salary,
-      effDate,
+      effdate,
       stamp,
       record_status
     `)
-    .eq('empNo', empNo)
+    .eq('empno', empNo)
     .eq('record_status', 'ACTIVE')
-    .order('effDate', { ascending: true })
+    .order('effdate', { ascending: true })
 
   if (error) {
     console.error('[reportService] getEmployeeFullHistory error:', error.message)
@@ -75,13 +75,13 @@ export async function getEmployeeFullHistory(empNo) {
   }
 
   return (data ?? []).map((row) => ({
-    empNo:         row.empNo,
-    jobCode:       row.jobCode,
-    jobDesc:       row.job?.jobDesc ?? '',
-    deptCode:      row.deptCode,
-    deptName:      row.department?.deptName ?? '',
+    empno:         row.empno,
+    jobcode:       row.jobcode,
+    jobdesc:       row.job?.jobdesc ?? '',
+    deptcode:      row.deptcode,
+    deptname:      row.department?.deptname ?? '',
     salary:        row.salary,
-    effDate:       row.effDate,
+    effdate:       row.effdate,
     stamp:         row.stamp,
     record_status: row.record_status,
   }))

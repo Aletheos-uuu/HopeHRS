@@ -38,11 +38,9 @@ export default function AddJobModal({ open, onClose, onSuccess }) {
     setSaving(true)
     setServerError('')
 
-
     const { error } = await supabase.from('job').insert({
-      jobCode: form.jobCode.trim().toUpperCase(),
-      jobDesc: form.jobDesc.trim(),
-
+      jobcode: form.jobCode.trim().toUpperCase(),
+      jobdesc: form.jobDesc.trim(),
       record_status: form.record_status,
     })
 

@@ -51,10 +51,23 @@ export default function AddEmployeeModal({ open, onClose, onSuccess, currentUser
   }
 
   async function handleSubmit() {
-    const errs = validate();
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
+    const errs = validate()
+    if (Object.keys(errs).length) { setErrors(errs); return }
+
+    setSaving(true)
+    setApiError('')
+
+    const { data, error } = await supabase
+      .from('employee')
+      .insert([{ ...form, record_status: 'ACTIVE' }])
+      .select()
+      .single()
+
+    setSaving(false)
+
+    if (error) {
+      setApiError(error.message)
+      return
     }
 
     setSaving(true);

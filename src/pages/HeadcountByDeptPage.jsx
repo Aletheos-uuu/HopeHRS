@@ -36,8 +36,8 @@ export default function HeadcountByDeptPage() {
   const totalActive = data.reduce((sum, r) => sum + (r.active_employee_count ?? 0), 0)
 
   const columns = [
-    { key: 'deptCode', label: 'Code' },
-    { key: 'deptName', label: 'Department' },
+    { key: 'deptcode', label: 'Code' },
+    { key: 'deptname', label: 'Department' },
     {
       key: 'active_employee_count',
       label: 'Active employees',
@@ -102,7 +102,7 @@ export default function HeadcountByDeptPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-4 col-span-2 sm:col-span-1">
             <p className="text-xs text-gray-500">Largest department</p>
             <p className="mt-1 text-lg font-semibold text-gray-900 truncate">
-              {data[0]?.deptName ?? '—'}
+              {data[0]?.deptname ?? '—'}
             </p>
           </div>
         </div>

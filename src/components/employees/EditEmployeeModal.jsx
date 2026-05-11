@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
-const GENDER_OPTIONS = ['M', 'F', 'Other']
+const GENDER_OPTIONS = ['M', 'F']
 
 function FormField({ label, error, children }) {
   return (
@@ -24,17 +24,16 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess }
   const [saving, setSaving]     = useState(false)
   const [apiError, setApiError] = useState('')
 
-  // seed form whenever `employee` changes
   useEffect(() => {
     if (employee) {
       setForm({
-        empno:     employee.empno     ?? '',
-        lastname:  employee.lastname  ?? '',
-        firstname: employee.firstname ?? '',
-        gender:    employee.gender    ?? '',
-        hiredate:  employee.hiredate  ?? '',
-        sepDate:   employee.sepDate   ?? '',
-        status:    employee.status    ?? 'ACTIVE',
+        empno:     employee.empno            ?? '',
+        lastname:  employee.lastname         ?? '',
+        firstname: employee.firstname        ?? '',
+        gender:    employee.gender           ?? '',
+        hiredate:  employee.hiredate         ?? '',
+        sepdate:   employee.sepdate          ?? '',
+        record_status:    employee.record_status    ?? 'ACTIVE',
       })
       setErrors({})
       setApiError('')
@@ -65,14 +64,14 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess }
     setApiError('')
 
     const { data, error } = await supabase
-      .from('employees')
+      .from('employee')
       .update({
         lastname:  form.lastname,
         firstname: form.firstname,
         gender:    form.gender,
         hiredate:  form.hiredate,
-        sepDate:   form.sepDate || null,
-        status:    form.status,
+        sepdate:   form.sepdate || null,
+        record_status:    form.record_status,
       })
       .eq('empno', employee.empno)
       .select()
@@ -157,8 +156,8 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess }
             <FormField label="Status">
               <select
                 className={inputCls}
-                value={form.status ?? 'ACTIVE'}
-                onChange={(e) => set('status', e.target.value)}
+                value={form.record_status ?? 'ACTIVE'}
+                onChange={(e) => set('record_status', e.target.value)}
                 disabled={saving}
               >
                 <option value="ACTIVE">ACTIVE</option>
@@ -181,8 +180,8 @@ export default function EditEmployeeModal({ open, employee, onClose, onSuccess }
               <input
                 type="date"
                 className={inputCls}
-                value={form.sepDate ?? ''}
-                onChange={(e) => set('sepDate', e.target.value)}
+                value={form.sepdate ?? ''}
+                onChange={(e) => set('sepdate', e.target.value)}
                 disabled={saving}
               />
             </FormField>
