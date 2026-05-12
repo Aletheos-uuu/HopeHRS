@@ -3,9 +3,9 @@
 **Project Title + Team**
 - **Hope, Inc. HR Management System (HOPEHRS)**
 - **Development Team**:
-  - **Scrum Master**: [Angelyn Bondoc](https://github.com/angelynbondoc)
+  - **Scrum Master**: [Aletheos Peñarubia](https://github.com/Aletheos-uuu)
   - **Frontend Developer (UI/UX)**: [Sean Orioque](https://github.com/seanorioque)
-  - **DB Engineer**: [Aletheos Peñarubia](https://github.com/Aletheos-uuu)
+  - **DB Engineer**: [Angelyn Bondoc](https://github.com/angelynbondoc)
   - **Rights & Authentication Specialist**: [Julia Rodrigo](https://github.com/engr-julia)
   - **QA / Documentation Specialist**: [Tricia Labbao](https://github.com/tricialabbao)
 - **Client**: Hope, Inc. HR Department
